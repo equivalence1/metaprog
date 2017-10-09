@@ -91,30 +91,43 @@
     (match exp
       [`(quote ,c) (println 'quote) #t]
       [`(list ,l ...) (println 'list) (= (length (filter (lambda (e) (not (is_exp_static_by_division e division))) l)) 0)]
-      [number (println 'number) #t]
-      [string (println 'string) #t]
       [`(,op ,l) (println 'op-1) (is_exp_static_by_division l division)]
       [`(,op ,e1 ,e2) (println 'op-2) (and (is_exp_static_by_division e1 division) (is_exp_static_by_division e2 division))]
       [`,x (println 'var) (is_var_static_by_division x division)]
       )))
 
-(define reduce
+(define _reduce
   (lambda (exp division)
     (match exp
-      [`(quote ,c) (println 'quote) c]
-      [`(list ,l ...) (println l) (map (lambda (e) (reduce e division)) `,l)]
-      [`(,op ,l) (println 'op-1) (let ([red_l (reduce l division)])
-                                   (println red_l)
-                                   (match red_l
-                                     [`,c (println 'my-evaling) (my-eval `(,op ',c))]
-                                     ;[`,x (my-eval `(,op ,c))]
-                                     [_ `(,op ,red_l)]))]
-      [`(,op ,e1 ,e2) (println 'op-2) (let ([red_e1 (reduce e1 division)]
-                                            [red_e2 (reduce e2 division)])
-                                        (match `(,red_e1 ,red_e2)
-                                          [`(,c1 ,c2) (my-eval `(,op ,c1 ,c2))]
-                                          [_ `(,op ,red_e1 ,red_e2)]))]
-      [`,x (println 'x) (if (is_var_static_by_division x division) (car (st-lookup division x)) x)]
+      [`(quote ,c) (println 'quote)
+        (cons `(quote ,c) #t)]
+
+      [`(list ,l ...) (println l)
+        (let ([reduced_list (map (lambda (e) (_reduce e division)) l)])
+          `(,(cons 'list (map car reduced_list)) . ,(andmap cdr reduced_list))
+        )]
+
+      [`(,op ,l) (println 'op-1)
+        (let ([red_l (_reduce l division)])
+          (println red_l)
+          (if (cdr red_l) `(,(my-eval `(,op ,(car red_l))) . #t) `((,op ,(car red_l)) . #f))
+         )]
+
+      [`(,op ,e1 ,e2) (println 'op-2)
+        (let ([red_e1 (_reduce e1 division)]
+              [red_e2 (_reduce e2 division)])
+          (if (and (cdr red_e1) (cdr red_e2)) `(,(my-eval `(,op ,(car red_e1) ,(car red_e2))) . #t) `((,op ,(car red_e1) ,(car red_e2)) . #f))
+        )]
+
+      [(? number? n) (println 'number) `(,n . #t)]
+
+      [`,x (println 'x) (if (is_var_static_by_division x division) `(,(car (st-lookup division x)) . #t) `(,x . #f))]
     )
+  )
+)
+
+(define reduce
+  (lambda (exp division)
+    (car (_reduce exp division))
   )
 )
