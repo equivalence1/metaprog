@@ -86,48 +86,72 @@
 (define is_var_static_by_division
   (lambda (x division)
     (dict-has-key? division x)))
-(define is_exp_static_by_division
-  (lambda (exp division)
-    (match exp
-      [`(quote ,c) (println 'quote) #t]
-      [`(list ,l ...) (println 'list) (= (length (filter (lambda (e) (not (is_exp_static_by_division e division))) l)) 0)]
-      [`(,op ,l) (println 'op-1) (is_exp_static_by_division l division)]
-      [`(,op ,e1 ,e2) (println 'op-2) (and (is_exp_static_by_division e1 division) (is_exp_static_by_division e2 division))]
-      [`,x (println 'var) (is_var_static_by_division x division)]
-      )))
+;(define is_exp_static_by_division
+;  (lambda (exp division)
+;    (match exp
+;      [`(quote ,c) (println 'quote) #t]
+;      [`(list ,l ...) (println 'list) (= (length (filter (lambda (e) (not (is_exp_static_by_division e division))) l)) 0)]
+;      [`(,op ,l) (println 'op-1) (is_exp_static_by_division l division)]
+;      [`(,op ,e1 ,e2) (println 'op-2) (and (is_exp_static_by_division e1 division) (is_exp_static_by_division e2 division))]
+;      [`,x (println 'var) (is_var_static_by_division x division)]
+;      )))
+
+(define (_zipwith acc l1 l2)
+  (if (or (empty? l1) (empty? l2)) acc (_zipwith (append acc (list (list (car l1) (car l2)))) (cdr l1) (cdr l2))))
+(define (zipwith l1 l2) (_zipwith '() l1 l2))
+
+(define (unzip l) (list (map car l) (map cadr l)))
+
+(define (var-set st x val)
+  (println `(var-set ,st ,x ,val))
+  (let ([names (car (unzip st))]
+        [values (cadr (unzip st))])
+    (println `(names ,names : values ,values))
+    (if (member x names) (zipwith names (list-set values (index-of names x) val)) (append st (list (list x val)))))
+)
 
 (define _reduce
   (lambda (exp division)
     (match exp
-      [`(quote ,c) (println 'quote)
-        (cons `(quote ,c) #t)]
+      [`(quote ,c) (println `('quote ,c))
+        `(',c . #t)]
 
-      [`(list ,l ...) (println l)
+      [`(list ,l ...) (println `('list ,l))
         (let ([reduced_list (map (lambda (e) (_reduce e division)) l)])
+          (println `(reduced_list ,reduced_list))
           `(,(cons 'list (map car reduced_list)) . ,(andmap cdr reduced_list))
         )]
 
-      [`(,op ,l) (println 'op-1)
+      [`(,op ,l) (println `(op1 ,op ,l))
         (let ([red_l (_reduce l division)])
+          (println 'back-to-op1)
           (println red_l)
-          (if (cdr red_l) `(,(my-eval `(,op ,(car red_l))) . #t) `((,op ,(car red_l)) . #f))
+          (println `,(car red_l))
+          (println `(my-eval '(,op (car ',red_l))))
+          (if (cdr red_l) `(,(my-eval `(,op (car ',red_l))) . #t) `((,op ,(car red_l)) . #f))
          )]
 
-      [`(,op ,e1 ,e2) (println 'op-2)
+      [`(,op ,e1 ,e2) (println `(op2 ,op ,e1 ,e2))
         (let ([red_e1 (_reduce e1 division)]
               [red_e2 (_reduce e2 division)])
-          (if (and (cdr red_e1) (cdr red_e2)) `(,(my-eval `(,op ,(car red_e1) ,(car red_e2))) . #t) `((,op ,(car red_e1) ,(car red_e2)) . #f))
+          (println 'back-to-op2)
+          (println red_e1)
+          (println red_e2)
+          (if (and (cdr red_e1) (cdr red_e2)) `(,(my-eval `(,op (car ',red_e1) (car ',red_e2))) . #t) `((,op ,(car red_e1) ,(car red_e2)) . #f))
         )]
 
-      [(? number? n) (println 'number) `(,n . #t)]
+      [(? number? n) (println `('number ,n)) `(,n . #t)]
 
-      [`,x (println 'x) (if (is_var_static_by_division x division) `(,(car (st-lookup division x)) . #t) `(,x . #f))]
+      [`,x (println x)(println `('variable ,x)) (if (is_var_static_by_division x division) `(,(car (st-lookup division x)) . #t) `(,x . #f))]
     )
   )
 )
 
 (define reduce
   (lambda (exp division)
-    (car (_reduce exp division))
+    (let ([result (car (_reduce exp division))])
+      (println `(reduced to ',result))
+      result
+    )
   )
 )

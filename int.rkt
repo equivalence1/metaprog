@@ -28,7 +28,7 @@
 (define int-assn
   (lambda (st assn)
     (match assn
-      [`(:= ,x ,exp) (let ([nv (eval-exp st exp)]) (st-set st x nv))]
+      [`(:= ,x ,exp) (println `('x- ,x)) (println `('exp- ,exp)) (let ([nv (eval-exp st exp)]) (println 'setting) (st-set st x nv))]
       [_ (error "int: assignment expected")]
       )))
 
@@ -41,7 +41,7 @@
    (found (return (car valuelist)))
    ))
 
-(define int_flow
+(define int_machine
 '(
  (read Q Right Qtail Left Symbol Instruction Operator)
  (init (:= Qtail Q)
@@ -72,19 +72,21 @@
 
 (define mix_flow
 '(
- (read program vs0)
- (init (:= pending `((,(caadr program) ,vs0)))
+ (read program st0)
+ (init (:= pending `((,(caadr program) ,st0)))
        (:= marked '())
-       (:= residual `(,(car program)))
+       (:= names (car (unzip st0)))
+       (:= dynamic (filter (lambda (x) (not (member x names))) (car program)))
+       (:= residual `(,dynamic))
        (goto outer-while))
 
  (outer-while (if (empty? pending) stop cont))
  (cont (:= pp (caar pending))
-       (:= vs (cadar pending))
+       (:= st (cadar pending))
        (:= pending (cdr pending))
-       (:= marked (cons `(,pp ,vs) marked))
+       (:= marked (cons `(,pp ,st) marked))
        (:= bb (st-lookup program pp))
-       (:= code `('(,pp - ,vs)))
+       (:= code `('(,pp - ,st)))
        (goto inner-while))
    (inner-while (if (empty? bb) update-residual inner-cont))
    (inner-cont (:= command (car bb))
@@ -96,25 +98,26 @@
    (case-ret  (if (eq? 'return (car command)) do-ret    error-case))
    (error-case (return ('illegal-command: command)))
 
-   (do-assign (if (st-bound? vs0 (cadr command)) do-assign-static do-assign-dynamic))
-   (do-assign-static (:= vs (dict-set vs (cadr command) (caddr command))) (goto inner-while))
-   (do-assign-dynamic (:= code (append code `((:= ,(cadr command) ,(reduce (caddr command) vs))))) (goto inner-while))
+   (do-assign (if (st-bound? st0 (cadr command)) do-assign-static do-assign-dynamic))
+   (do-assign-static (:= st (var-set st (cadr command) (reduce (caddr command) st))) (goto inner-while))
+   (do-assign-dynamic (:= code (append code `((:= ,(cadr command) ,(reduce (caddr command) st))))) (goto inner-while))
 
    (do-goto (:= bb (st-lookup program (cadr command))) (goto inner-while))
 
-   (do-if (if (is_exp_static_by_division `,(cadr command) vs) do-if-static do-if-dynamic))
-   (do-if-static (if (cadr command) do-if-static-1 do-if-static-2))
+   (do-if (:= reduced_exp (_reduce (cadr command) st)) (goto do-if-1))
+   (do-if-1 (if (cdr reduced_exp) do-if-static do-if-dynamic))
+   (do-if-static (if (car reduced_exp) do-if-static-1 do-if-static-2))
    (do-if-static-1 (:= bb (st-lookup program (caddr command))) (goto inner-while))
-   (do-if-static-2 (:= bb (st-loopup program (cadddr command))) (goto inner-while))
+   (do-if-static-2 (:= bb (st-lookup program (cadddr command))) (goto inner-while))
 
-   (do-if-dynamic (if (member `(,(caddr command) ,vs) marked) do-if-dynamic-2 do-if-dynamic-1))
-   (do-if-dynamic-1 (:= pending (append pending `((,(caddr command) ,vs)))) (goto do-if-dynamic-2))
-   (do-if-dynamic-2 (if (member `(,(cadddr command) ,vs) marked) do-if-dynamic-4 do-if-dynamic-3))
-   (do-if-dynamic-3 (:= pending (append pending `((,(cadddr command) ,vs)))) (goto do-if-dynamic-4))
-   (do-if-dynamic-4 (:= code (append code `((if ,(reduce (cadr command) vs) '(,(caddr command) - ,vs) '(,(cadddr command) - ,vs))))) (goto inner-while))
+   (do-if-dynamic (if (member `(,(caddr command) ,st) marked) do-if-dynamic-2 do-if-dynamic-1))
+   (do-if-dynamic-1 (:= pending (append pending `((,(caddr command) ,st)))) (goto do-if-dynamic-2))
+   (do-if-dynamic-2 (if (member `(,(cadddr command) ,st) marked) do-if-dynamic-4 do-if-dynamic-3))
+   (do-if-dynamic-3 (:= pending (append pending `((,(cadddr command) ,st)))) (goto do-if-dynamic-4))
+   (do-if-dynamic-4 (:= code (append code `((if ,(reduce (cadr command) st) '(,(caddr command) - ,st) '(,(cadddr command) - ,st))))) (goto inner-while))
    
-   (do-ret (:= code (append code `((return ,(reduce (cadr command) vs))))) (goto inner-while))
-   
+   (do-ret (:= code (append code `((return ,(reduce (cadr command) st))))) (goto inner-while))
+
  (update-residual (:= residual (append residual `(,code))) (goto outer-while))
  (stop (return residual))
 ))
