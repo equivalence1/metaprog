@@ -103,46 +103,58 @@
 (define (unzip l) (list (map car l) (map cadr l)))
 
 (define (var-set st x val)
-  (println `(var-set ,st ,x ,val))
+;  (println `(var-set ,st ,x ,val))
   (let ([names (car (unzip st))]
         [values (cadr (unzip st))])
-    (println `(names ,names : values ,values))
+;    (println `(names ,names : values ,values))
     (if (member x names) (zipwith names (list-set values (index-of names x) val)) (append st (list (list x val)))))
 )
 
 (define _reduce
   (lambda (exp division)
     (match exp
-      [`(quote ,c) (println `('quote ,c))
-        `(',c . #t)]
+      [`(quote ,c)
+        ; (println `('quote ,c))
+        (cons `',c #t)]
 
-      [`(list ,l ...) (println `('list ,l))
+      [`(list ,l ...) ; (println `('list ,l))
         (let ([reduced_list (map (lambda (e) (_reduce e division)) l)])
-          (println `(reduced_list ,reduced_list))
-          `(,(cons 'list (map car reduced_list)) . ,(andmap cdr reduced_list))
+;          (println `(reduced_list ,reduced_list))
+          (cons (cons 'list (map car reduced_list)) (andmap cdr reduced_list))
         )]
 
-      [`(,op ,l) (println `(op1 ,op ,l))
+      [`(,op ,l)
+        (println `(op1 ,op ,l))
         (let ([red_l (_reduce l division)])
           (println 'back-to-op1)
           (println red_l)
-          (println `,(car red_l))
-          (println `(my-eval '(,op (car ',red_l))))
-          (if (cdr red_l) `(,(my-eval `(,op (car ',red_l))) . #t) `((,op ,(car red_l)) . #f))
-         )]
-
-      [`(,op ,e1 ,e2) (println `(op2 ,op ,e1 ,e2))
+          (let ([red_exp (car red_l)])
+;            (println `(will eval (,op ,red_exp)))
+            (if (cdr red_l) (cons `',(my-eval `(,op ,red_exp)) #t) (cons `(,op ,red_exp) #f)) ; TODO do I need ' in #f
+          )
+        )
+      ]
+      
+      [`(,op ,e1 ,e2) ; (println `(op2 ,op ,e1 ,e2))
         (let ([red_e1 (_reduce e1 division)]
               [red_e2 (_reduce e2 division)])
-          (println 'back-to-op2)
-          (println red_e1)
-          (println red_e2)
-          (if (and (cdr red_e1) (cdr red_e2)) `(,(my-eval `(,op (car ',red_e1) (car ',red_e2))) . #t) `((,op ,(car red_e1) ,(car red_e2)) . #f))
-        )]
+;          (println red_e1)
+;          (println red_e2)
+          (let ([red_exp1 (car red_e1)]
+                [red_exp2 (car red_e2)])
+;            (println `(op2 ,op ,red_exp1 ,red_exp2))
+            (if (and (cdr red_e1) (cdr red_e2)) (cons `',(my-eval `(,op ,red_exp1 ,red_exp2)) #t) (cons `(,op ,red_exp1 ,red_exp2) #f)) ; TODO do I need ' in #f
+          )
+        )
+      ]
 
-      [(? number? n) (println `('number ,n)) `(,n . #t)]
+      [(? number? n) ;(println `('number ,n))
+           (cons n #t)]
 
-      [`,x (println x)(println `('variable ,x)) (if (is_var_static_by_division x division) `(,(car (st-lookup division x)) . #t) `(,x . #f))]
+      [`,x
+           ;(println x)
+           (println `('variable ,x))
+           (if (is_var_static_by_division x division) (cons (car (st-lookup division x)) #t) (cons x #f))] ; TODO do I need ' in #f
     )
   )
 )
@@ -150,7 +162,7 @@
 (define reduce
   (lambda (exp division)
     (let ([result (car (_reduce exp division))])
-      (println `(reduced to ',result))
+;      (println `(reduced to ,result))
       result
     )
   )

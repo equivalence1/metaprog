@@ -13,8 +13,10 @@
   (lambda (prog st bb)
     (match bb
       ['() (error "int: empty basic_block list")]
-      [`(,h) (println `(current line: ,h)) (println `(current state: ,st)) (println '()) (int-jump prog st h)]
-      [`(,h . ,t) (println `(current line: ,h)) (println `(current state: ,st)) (println '()) (int-bb prog (int-assn st h) t)]
+      [`(,h) ; (println `(current line: ,h)) (println `(current state: ,st)) (println '())
+             (int-jump prog st h)]
+      [`(,h . ,t) ; (println `(current line: ,h)) (println `(current state: ,st)) (println '())
+              (int-bb prog (int-assn st h) t)]
       )))
 
 (define int-jump
@@ -28,7 +30,9 @@
 (define int-assn
   (lambda (st assn)
     (match assn
-      [`(:= ,x ,exp) (println `('x- ,x)) (println `('exp- ,exp)) (let ([nv (eval-exp st exp)]) (println 'setting) (st-set st x nv))]
+      [`(:= ,x ,exp) ; (println `('x- ,x)) (println `('exp- ,exp))
+       (let ([nv (eval-exp st exp)]) ; (println 'setting)
+                (st-set st x nv))]
       [_ (error "int: assignment expected")]
       )))
 
@@ -43,7 +47,7 @@
 
 (define int_machine
 '(
- (read Q Right Qtail Left Symbol Instruction Operator)
+ (read Q Right)
  (init (:= Qtail Q)
        (:= Left '())
        (goto loop))
@@ -60,17 +64,17 @@
  (do-left  (:= Left (cdr Left))                      (:= Right (cons (car Left) Right))               (goto loop))
  (do-write (:= Symbol (caddr Instruction))           (:= Right (cons Symbol (cdr Right)))             (goto loop))
  (do-goto  (:= Nextlabel (caddr Instruction))        (:= Qtail (list-tail Q Nextlabel))               (goto loop))
- (do-if    (:= Symbol (caddr Instruction))           (:= Nextlable (caddr (cddr Instruction)))        (if (eq? Symbol (car Right)) jump loop))
+ (do-if    (:= Symbol (caddr Instruction))           (:= Nextlabel (caddr (cddr Instruction)))        (if (eq? Symbol (car Right)) jump loop))
 
- (jump     (:= Qtail (list-tail Q Nextlable))        (goto loop))
+ (jump     (:= Qtail (list-tail Q Nextlabel))        (goto loop))
 
- (error    (return ('syntax-error: Instruction)))
+ (error    (return `(syntax-error: ,Instruction)))
 
  (stop     (return Right))
 ))
 
 
-(define mix_flow
+(define mix
 '(
  (read program st0)
  (init (:= pending `((,(caadr program) ,st0)))
@@ -106,7 +110,7 @@
 
    (do-if (:= reduced_exp (_reduce (cadr command) st)) (goto do-if-1))
    (do-if-1 (if (cdr reduced_exp) do-if-static do-if-dynamic))
-   (do-if-static (if (car reduced_exp) do-if-static-1 do-if-static-2))
+   (do-if-static (if (equal? (car reduced_exp) ''#t) do-if-static-1 do-if-static-2))
    (do-if-static-1 (:= bb (st-lookup program (caddr command))) (goto inner-while))
    (do-if-static-2 (:= bb (st-lookup program (cadddr command))) (goto inner-while))
 
