@@ -124,10 +124,10 @@
         )]
 
       [`(,op ,l)
-        (println `(op1 ,op ,l))
+        ; (println `(op1 ,op ,l))
         (let ([red_l (_reduce l division)])
-          (println 'back-to-op1)
-          (println red_l)
+          ; (println 'back-to-op1)
+          ; (println red_l)
           (let ([red_exp (car red_l)])
 ;            (println `(will eval (,op ,red_exp)))
             (if (cdr red_l) (cons `',(my-eval `(,op ,red_exp)) #t) (cons `(,op ,red_exp) #f)) ; TODO do I need ' in #f
@@ -153,7 +153,7 @@
 
       [`,x
            ;(println x)
-           (println `('variable ,x))
+           ; (println `('variable ,x))
            (if (is_var_static_by_division x division) (cons (car (st-lookup division x)) #t) (cons x #f))] ; TODO do I need ' in #f
     )
   )

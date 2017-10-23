@@ -77,20 +77,20 @@
 (define mix
 '(
  (read program st0)
- (init (:= pending `((,(caadr program) ,st0)))
+ (init (:= pending (list (list (caadr program) st0)))
        (:= marked '())
        (:= names (car (unzip st0)))
        (:= dynamic (filter (lambda (x) (not (member x names))) (car program)))
-       (:= residual `(,dynamic))
+       (:= residual (list dynamic))
        (goto outer-while))
 
  (outer-while (if (empty? pending) stop cont))
  (cont (:= pp (caar pending))
        (:= st (cadar pending))
        (:= pending (cdr pending))
-       (:= marked (cons `(,pp ,st) marked))
+       (:= marked (cons (list pp st) marked))
        (:= bb (st-lookup program pp))
-       (:= code `('(,pp - ,st)))
+       (:= code (list (list pp '- st)))
        (goto inner-while))
    (inner-while (if (empty? bb) update-residual inner-cont))
    (inner-cont (:= command (car bb))
@@ -104,7 +104,7 @@
 
    (do-assign (if (st-bound? st0 (cadr command)) do-assign-static do-assign-dynamic))
    (do-assign-static (:= st (var-set st (cadr command) (reduce (caddr command) st))) (goto inner-while))
-   (do-assign-dynamic (:= code (append code `((:= ,(cadr command) ,(reduce (caddr command) st))))) (goto inner-while))
+   (do-assign-dynamic (:= code (append code (list (list ':= (cadr command) (reduce (caddr command) st))))) (goto inner-while))
 
    (do-goto (:= bb (st-lookup program (cadr command))) (goto inner-while))
 
@@ -114,14 +114,14 @@
    (do-if-static-1 (:= bb (st-lookup program (caddr command))) (goto inner-while))
    (do-if-static-2 (:= bb (st-lookup program (cadddr command))) (goto inner-while))
 
-   (do-if-dynamic (if (member `(,(caddr command) ,st) marked) do-if-dynamic-2 do-if-dynamic-1))
-   (do-if-dynamic-1 (:= pending (append pending `((,(caddr command) ,st)))) (goto do-if-dynamic-2))
-   (do-if-dynamic-2 (if (member `(,(cadddr command) ,st) marked) do-if-dynamic-4 do-if-dynamic-3))
-   (do-if-dynamic-3 (:= pending (append pending `((,(cadddr command) ,st)))) (goto do-if-dynamic-4))
-   (do-if-dynamic-4 (:= code (append code `((if ,(reduce (cadr command) st) '(,(caddr command) - ,st) '(,(cadddr command) - ,st))))) (goto inner-while))
+   (do-if-dynamic (if (member (list (caddr command) st) marked) do-if-dynamic-2 do-if-dynamic-1))
+   (do-if-dynamic-1 (:= pending (append pending (list (list (caddr command) st)))) (goto do-if-dynamic-2))
+   (do-if-dynamic-2 (if (member (list (cadddr command) st) marked) do-if-dynamic-4 do-if-dynamic-3))
+   (do-if-dynamic-3 (:= pending (append pending (list (list (cadddr command) st)))) (goto do-if-dynamic-4))
+   (do-if-dynamic-4 (:= code (append code (list (list 'if (reduce (cadr command) st) (list (caddr command) '- st) (list (cadddr command) '- st))))) (goto inner-while))
    
-   (do-ret (:= code (append code `((return ,(reduce (cadr command) st))))) (goto inner-while))
+   (do-ret (:= code (append code (list (list 'return (reduce (cadr command) st))))) (goto inner-while))
 
- (update-residual (:= residual (append residual `(,code))) (goto outer-while))
+ (update-residual (:= residual (append residual (list code))) (goto outer-while))
  (stop (return residual))
 ))
