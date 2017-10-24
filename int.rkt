@@ -76,17 +76,20 @@
 
 (define mix
 '(
- (read program st0)
- (init (:= pending (list (list (caadr program) st0)))
+ (read program names values)
+ (init (:= st0 (zipwith names values))
+       (:= pending (list (list (caadr program) st0)))
        (:= marked '())
-       (:= names (car (unzip st0)))
        (:= dynamic (filter (lambda (x) (not (member x names))) (car program)))
        (:= residual (list dynamic))
        (goto outer-while))
 
- (outer-while (if (empty? pending) stop cont))
- (cont (:= pp (caar pending))
-       (:= st (cadar pending))
+ (outer-while (if (empty? pending) stop cont-pp-1))
+ (cont-pp-1 (:= tmp_prog program) (goto cont-pp))
+ (cont-pp (:= tmp_prog (cdr tmp_prog))
+          (if (eq? (caar pending) (caar tmp_prog)) set-pp cont-pp))
+ (set-pp (:= pp (caar tmp_prog)) (goto cont))
+ (cont (:= st (cadar pending))
        (:= pending (cdr pending))
        (:= marked (cons (list pp st) marked))
        (:= bb (st-lookup program pp))
@@ -102,7 +105,7 @@
    (case-ret  (if (eq? 'return (car command)) do-ret    error-case))
    (error-case (return ('illegal-command: command)))
 
-   (do-assign (if (st-bound? st0 (cadr command)) do-assign-static do-assign-dynamic))
+   (do-assign (if (member (cadr command) names) do-assign-static do-assign-dynamic))
    (do-assign-static (:= st (var-set st (cadr command) (reduce (caddr command) st))) (goto inner-while))
    (do-assign-dynamic (:= code (append code (list (list ':= (cadr command) (reduce (caddr command) st))))) (goto inner-while))
 

@@ -114,17 +114,17 @@
   (lambda (exp division)
     (match exp
       [`(quote ,c)
-        ; (println `('quote ,c))
+;       (println `('quote ,c))
         (cons `',c #t)]
 
       [`(list ,l ...) ; (println `('list ,l))
         (let ([reduced_list (map (lambda (e) (_reduce e division)) l)])
-;          (println `(reduced_list ,reduced_list))
+;         (println `(reduced_list ,reduced_list))
           (cons (cons 'list (map car reduced_list)) (andmap cdr reduced_list))
         )]
 
       [`(,op ,l)
-        ; (println `(op1 ,op ,l))
+;       (println `(op1 ,op ,l))
         (let ([red_l (_reduce l division)])
           ; (println 'back-to-op1)
           ; (println red_l)
