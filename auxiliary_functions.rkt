@@ -31,8 +31,8 @@
       (bb-set bbs (car i) (cdr i)))))
 
 ; eval
-(define-namespace-anchor a)
-(define ns (namespace-anchor->namespace a))
+(define-namespace-anchor abracadabra)
+(define ns (namespace-anchor->namespace abracadabra))
 (define my-eval
   (lambda (e)
     (eval e ns)))
@@ -84,17 +84,17 @@
 ; division
 ; ASSUMPTION: division contains only static variables!
 (define is_var_static_by_division
-  (lambda (x division)
-    (dict-has-key? division x)))
-;(define is_exp_static_by_division
-;  (lambda (exp division)
-;    (match exp
-;      [`(quote ,c) (println 'quote) #t]
-;      [`(list ,l ...) (println 'list) (= (length (filter (lambda (e) (not (is_exp_static_by_division e division))) l)) 0)]
-;      [`(,op ,l) (println 'op-1) (is_exp_static_by_division l division)]
-;      [`(,op ,e1 ,e2) (println 'op-2) (and (is_exp_static_by_division e1 division) (is_exp_static_by_division e2 division))]
-;      [`,x (println 'var) (is_var_static_by_division x division)]
-;      )))
+  (lambda (x names)
+    (if (member x names) #t #f)))
+(define is_exp_static_by_division
+  (lambda (exp names)
+    (match exp
+      [`(quote ,c) #t]
+      [`(list ,l ...) (= (length (filter (lambda (e) (not (is_exp_static_by_division e names))) l)) 0)]
+      [`(,op ,l) (is_exp_static_by_division l names)]
+      [`(,op ,e1 ,e2) (and (is_exp_static_by_division e1 names) (is_exp_static_by_division e2 names))]
+      [`,x (is_var_static_by_division x names)]
+     )))
 
 (define (_zipwith acc l1 l2)
   (if (or (empty? l1) (empty? l2)) acc (_zipwith (append acc (list (list (car l1) (car l2)))) (cdr l1) (cdr l2))))
@@ -117,50 +117,70 @@
 ;       (println `('quote ,c))
         (cons `',c #t)]
 
-      [`(list ,l ...) ; (println `('list ,l))
+      [`(list ,l ...)
+       ; (println `('list ,l))
         (let ([reduced_list (map (lambda (e) (_reduce e division)) l)])
 ;         (println `(reduced_list ,reduced_list))
           (cons (cons 'list (map car reduced_list)) (andmap cdr reduced_list))
         )]
 
       [`(,op ,l)
-;       (println `(op1 ,op ,l))
+ ;      (println `(op1 ,op ,l))
         (let ([red_l (_reduce l division)])
-          ; (println 'back-to-op1)
-          ; (println red_l)
+;          (println `(back-to-op1 ,red_l))
           (let ([red_exp (car red_l)])
-;            (println `(will eval (,op ,red_exp)))
+ ;           (println `(so it is op1 ,op ,red_exp))
             (if (cdr red_l) (cons `',(my-eval `(,op ,red_exp)) #t) (cons `(,op ,red_exp) #f)) ; TODO do I need ' in #f
           )
         )
       ]
       
-      [`(,op ,e1 ,e2) ; (println `(op2 ,op ,e1 ,e2))
+      [`(,op ,e1 ,e2)
+       ; (println `(op2 ,op ,e1 ,e2))
         (let ([red_e1 (_reduce e1 division)]
               [red_e2 (_reduce e2 division)])
-;          (println red_e1)
-;          (println red_e2)
+;          (println `(op2 red1 ,red_e1))
+;          (println `(op2 red2 ,red_e2))
           (let ([red_exp1 (car red_e1)]
                 [red_exp2 (car red_e2)])
-;            (println `(op2 ,op ,red_exp1 ,red_exp2))
+;            (println `(so it is op2 ,op ,red_exp1 ,red_exp2))
             (if (and (cdr red_e1) (cdr red_e2)) (cons `',(my-eval `(,op ,red_exp1 ,red_exp2)) #t) (cons `(,op ,red_exp1 ,red_exp2) #f)) ; TODO do I need ' in #f
           )
         )
       ]
 
-      [(? number? n) ;(println `('number ,n))
-           (cons n #t)]
+      [`(,op ,e1 ,e2 ,e3)
+       ;(println `(op3 ,op ,e1 ,e2 ,e3))
+        (let ([red_e1 (_reduce e1 division)]
+              [red_e2 (_reduce e2 division)]
+              [red_e3 (_reduce e3 division)])
+;          (println `(op3 red1 ,red_e1))
+;          (println `(op3 red2 ,red_e2))
+;          (println `(op3 red3 ,red_e3))
+          (let ([red_exp1 (car red_e1)]
+                [red_exp2 (car red_e2)]
+                [red_exp3 (car red_e3)])
+;            (println `(so it is op3 ,op ,red_exp1 ,red_exp2 ,red_exp3))
+            (if (and (cdr red_e1) (cdr red_e2)) (cons `',(my-eval `(,op ,red_exp1 ,red_exp2 ,red_exp3)) #t) (cons `(,op ,red_exp1 ,red_exp2 ,red_exp3) #f)) ; TODO do I need ' in #f
+          )
+        )
+      ]
+
+      [(? number? n)
+           ;(println `('number ,n))
+           (cons `',n #t)]
 
       [`,x
-           ;(println x)
-           ; (println `('variable ,x))
-           (if (is_var_static_by_division x division) (cons (car (st-lookup division x)) #t) (cons x #f))] ; TODO do I need ' in #f
+           ;(println x); with value ,(car (st-lookup division x))
+;           (println `('variable ,x))
+           (if (is_var_static_by_division x (car (unzip division))) (cons (car (st-lookup division x)) #t) (cons x #f))] ; TODO do I need ' in #f
     )
   )
 )
 
 (define reduce
   (lambda (exp division)
+ ;   (println `(reducing ,exp))
     (let ([result (car (_reduce exp division))])
 ;      (println `(reduced to ,result))
       result
