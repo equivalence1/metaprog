@@ -146,6 +146,145 @@
 
 
 
+(define mix1
+'(
+ (read program1 names1 values1)
+ (init (:= st01 (zipwith names1 values1))
+       (:= pending1 (list (list (caadr program1) st01)))
+       (:= marked1 '())
+       (:= residual1 (list (filter (lambda (x) (not (member x names1))) (car program1))))
+       (goto outer-while))
+
+ (outer-while (if (empty? pending1) stop init-pp))
+ (init-pp (:= tmp_prog1 program1)
+          (goto init-pp-1))
+ (init-pp-1 (:= tmp_prog1 (cdr tmp_prog1))
+            (if (empty? tmp_prog1) error init-pp-2))
+ (error (return 'WTF))
+ (init-pp-2 (if (eq? (caar pending1) (caar tmp_prog1)) set-pp init-pp-1))
+ (set-pp (:= pp1 (caar tmp_prog1)) (:= tmp_prog1 '()) (goto cont))
+ (cont (:= st1 (cadar pending1))
+       (:= pending1 (cdr pending1))
+       (:= marked1 (cons (list pp1 st1) marked1))
+       (:= bb1 (st-lookup program1 pp1))
+       (:= code1 (list (list pp1 '- st1)))
+       (:= pp1 '())
+       (goto inner-while))
+   (inner-while (if (empty? bb1) update-residual inner-cont))
+   (inner-cont (:= command1 (car bb1))
+               (println `(Command is ,command1))
+               (:= bb1 (cdr bb1))
+               (goto case-expr))
+   (case-expr (if (eq? ':=     (car command1)) do-assign case-goto))
+   (case-goto (if (eq? 'goto   (car command1)) do-goto   case-if))
+   (case-if   (if (eq? 'if     (car command1)) do-if     case-ret))
+   (case-ret  (if (eq? 'return (car command1)) do-ret    case-println))
+   (case-println  (if (eq? 'println (car command1)) do-print error-case))
+   (error-case (return `(illegal-command: ,command1)))
+
+   (do-print (goto inner-while))
+
+   (do-assign (if (is_exp_static_by_division (cadr command1) names1) do-assign-static do-assign-dynamic))
+   (do-assign-static (println `(assign-static ,(cadr command1) from ,(st-lookup st1 (cadr command1)) to ,(reduce (caddr command1) st1) ))
+                     (:= st1 (var-set st1 (cadr command1) (reduce (caddr command1) st1))) (goto inner-while))
+   (do-assign-dynamic (println 'assign-dynamic) (:= code1 (append code1 (list (list ':= (cadr command1) (reduce (caddr command1) st1))))) (goto inner-while))
+
+   (do-goto (:= bb1 (st-lookup program1 (cadr command1))) (goto inner-while))
+
+   (do-if (if (is_exp_static_by_division (cadr command1) names1) do-if-static do-if-dynamic))
+   (do-if-static
+      (println 'do-if-static)
+      (println `(reducing expression ,(cadr command1) ,(reduce 'st1 st1)))
+      (:= reduced_exp1 (reduce (cadr command1) st1))
+      (println `(reduced to ,reduced_exp1))
+      (if (equal? reduced_exp1 ''#t) do-if-static-1 do-if-static-2))
+   (do-if-static-1 (:= bb1 (st-lookup program1 (caddr command1))) (goto inner-while))
+   (do-if-static-2 (:= bb1 (st-lookup program1 (cadddr command1))) (goto inner-while))
+
+   (do-if-dynamic (println 'do-if-dynamic) (if (member (list (caddr command1) st1) marked1) do-if-dynamic-2 do-if-dynamic-1))
+   (do-if-dynamic-1 (:= pending1 (append pending1 (list (list (caddr command1) st1)))) (goto do-if-dynamic-2))
+   (do-if-dynamic-2 (if (member (list (cadddr command1) st1) marked1) do-if-dynamic-4 do-if-dynamic-3))
+   (do-if-dynamic-3 (:= pending1 (append pending1 (list (list (cadddr command1) st1)))) (goto do-if-dynamic-4))
+   (do-if-dynamic-4 (:= code1 (append code1 (list (list 'if (reduce (cadr command1) st1) (list (caddr command1) '- st1) (list (cadddr command1) '- st1))))) (goto inner-while))
+
+   (do-ret (:= code1 (append code1 (list (list 'return (reduce (cadr command1) st1))))) (goto inner-while))
+
+ (update-residual (:= residual1 (append residual1 (list code1))) (:= command1 '()) (goto outer-while))
+ (stop (return residual1))
+))
+
+
+
+(define mix2
+'(
+ (read program2 names2 values2)
+ (init (:= st02 (zipwith names2 values2))
+       (:= pending2 (list (list (caadr program2) st02)))
+       (:= marked2 '())
+       (:= residual2 (list (filter (lambda (x) (not (member x names2))) (car program2))))
+       (goto outer-while))
+
+ (outer-while (if (empty? pending2) stop init-pp))
+ (init-pp (:= tmp_prog2 program2)
+          (goto init-pp-1))
+ (init-pp-1 (:= tmp_prog2 (cdr tmp_prog2))
+            (if (empty? tmp_prog2) error init-pp-2))
+ (error (return 'WTF))
+ (init-pp-2 (if (eq? (caar pending2) (caar tmp_prog2)) set-pp init-pp-1))
+ (set-pp (:= pp2 (caar tmp_prog2)) (:= tmp_prog2 '()) (goto cont))
+ (cont (:= st2 (cadar pending2))
+       (:= pending2 (cdr pending2))
+       (:= marked2 (cons (list pp2 st2) marked2))
+       (:= bb2 (st-lookup program2 pp2))
+       (:= code2 (list (list pp2 '- st2)))
+       (:= pp2 '())
+       (goto inner-while))
+   (inner-while (if (empty? bb2) update-residual inner-cont))
+   (inner-cont (:= command2 (car bb2))
+               (println `(Command is ,command2))
+               (:= bb2 (cdr bb2))
+               (goto case-expr))
+   (case-expr (if (eq? ':=     (car command2)) do-assign case-goto))
+   (case-goto (if (eq? 'goto   (car command2)) do-goto   case-if))
+   (case-if   (if (eq? 'if     (car command2)) do-if     case-ret))
+   (case-ret  (if (eq? 'return (car command2)) do-ret    case-println))
+   (case-println  (if (eq? 'println (car command2)) do-print error-case))
+   (error-case (return `(illegal-command: ,command2)))
+
+   (do-print (goto inner-while))
+
+   (do-assign (if (is_exp_static_by_division (cadr command2) names2) do-assign-static do-assign-dynamic))
+   (do-assign-static (println `(assign-static ,(cadr command2) from ,(st-lookup st2 (cadr command2)) to ,(reduce (caddr command2) st2) ))
+                     (:= st2 (var-set st2 (cadr command2) (reduce (caddr command2) st2))) (goto inner-while))
+   (do-assign-dynamic (println 'assign-dynamic) (:= code2 (append code2 (list (list ':= (cadr command2) (reduce (caddr command2) st2))))) (goto inner-while))
+
+   (do-goto (:= bb2 (st-lookup program2 (cadr command2))) (goto inner-while))
+
+   (do-if (if (is_exp_static_by_division (cadr command2) names2) do-if-static do-if-dynamic))
+   (do-if-static
+      (println 'do-if-static)
+      (println `(reducing expression ,(cadr command2) ,(reduce 'st2 st2)))
+      (:= reduced_exp2 (reduce (cadr command2) st2))
+      (println `(reduced to ,reduced_exp2))
+      (if (equal? reduced_exp2 ''#t) do-if-static-1 do-if-static-2))
+   (do-if-static-1 (:= bb2 (st-lookup program2 (caddr command2))) (goto inner-while))
+   (do-if-static-2 (:= bb2 (st-lookup program2 (cadddr command2))) (goto inner-while))
+
+   (do-if-dynamic (println 'do-if-dynamic) (if (member (list (caddr command2) st2) marked2) do-if-dynamic-2 do-if-dynamic-1))
+   (do-if-dynamic-1 (:= pending2 (append pending2 (list (list (caddr command2) st2)))) (goto do-if-dynamic-2))
+   (do-if-dynamic-2 (if (member (list (cadddr command2) st2) marked2) do-if-dynamic-4 do-if-dynamic-3))
+   (do-if-dynamic-3 (:= pending2 (append pending2 (list (list (cadddr command2) st2)))) (goto do-if-dynamic-4))
+   (do-if-dynamic-4 (:= code2 (append code2 (list (list 'if (reduce (cadr command2) st2) (list (caddr command2) '- st2) (list (cadddr command2) '- st2))))) (goto inner-while))
+
+   (do-ret (:= code2 (append code2 (list (list 'return (reduce (cadr command2) st2))))) (goto inner-while))
+
+ (update-residual (:= residual2 (append residual2 (list code2))) (:= command2 '()) (goto outer-while))
+ (stop (return residual2))
+))
+
+
+
+
 
 (define change-labels
   (lambda (program)
@@ -178,6 +317,12 @@
 ; (change-labels (int mix `(,mix (program names dynamic pp bb command tmp_prog) (',find_name '(name namelist) '() '() '() '() '()))))
 ; output on '(('z '(x y z)))
 ; output on '((1 2 3))
+
+; third projection
+; (change-labels (int mix `(,mix1 (program1 names1 dynamic1 pp1 bb1 command1 tmp_prog1) (',mix2 '(program2 names2 dynamic2 pp2 bb2 command2 tmp_prog2) '() '() '() '() '()))))
+; output on `((',int_machine '(Q Qtail Instruction Operator Nextlabel Symbol) '() '() '() '() '()))
+; '(('((0 if 0 goto 3) (1 right) (2 goto 0) (3 write 1)) '() '() '() '() '()))
+; '((1 1 0 1 0 1))
 
 ; (change-labels (int mix `(,mix (program names dynamic pp tmp_prog) (',int_machine '(Q Qtail Instruction Operator Nextlabel Symbol) '() '() '()))))
 
