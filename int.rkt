@@ -324,6 +324,12 @@
 ; '(('((0 if 0 goto 3) (1 right) (2 goto 0) (3 write 1)) '() '() '() '() '()))
 ; '((1 1 0 1 0 1))
 
+(define third_proj (change-labels (int mix `(,mix1 (program1 names1 dynamic1 pp1 bb1 command1 tmp_prog1) (',mix2 '(program2 names2 dynamic2 pp2 bb2 command2 tmp_prog2) '() '() '() '() '())))))
+(define out1 (change-labels (int third_proj `((',int_machine '(Q Qtail Instruction Operator Nextlabel Symbol) '() '() '() '() '())))))
+(define out2 (change-labels (int out1 '(('((0 if 0 goto 3) (1 right) (2 goto 0) (3 write 1)) '() '() '() '() '())))))
+(define result (int out2 '((1 1 0 1 0 1))))
+(println result)
+
 ; (change-labels (int mix `(,mix (program names dynamic pp tmp_prog) (',int_machine '(Q Qtail Instruction Operator Nextlabel Symbol) '() '() '()))))
 
 ;(define mm (change-labels
