@@ -18,7 +18,7 @@ class ExprPrinterTest extends FunSuite {
         |    f = (\x0 . (\x1 . (x0 x1)));
         |    g = (\x0 . x0);
         |    h = case x of {Nil -> Z | Cons x0 x1 -> (S Z)};
-        |    p = let x0 = (g Z) in x0;
+        |    p = let x0 = (g Z) in let x1 = x0 in x1;
       """.stripMargin.trim()) {
       val code =
         """f g Z
@@ -26,9 +26,8 @@ class ExprPrinterTest extends FunSuite {
           |    f = \f x . f x;
           |    g = \x . x;
           |    h = case x of {Nil -> Z | Cons a b -> S Z};
-          |    p = let x = g Z in x;
+          |    p = let x = g Z in let y = x in y;
         """.stripMargin
-      println(ProgPrinter(AstTransformer(Parser(code))))
       ProgPrinter(AstTransformer(Parser(code))).trim()
     }
   }

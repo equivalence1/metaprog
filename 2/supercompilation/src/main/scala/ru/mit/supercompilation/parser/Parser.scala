@@ -120,7 +120,7 @@ object AstTransformer {
       case ConstructorNode(name, args) => Constr(name, args.map(arg => exprTransform(arg, scopeVariablesStack)))
 
       case LetNode(varName, e1, e2) =>
-        Let(exprTransform(e1, varName :: scopeVariablesStack), exprTransform(e2, varName :: scopeVariablesStack))
+        Let(exprTransform(e1, scopeVariablesStack), exprTransform(e2, varName :: scopeVariablesStack))
 
       case CaseNode(e, cases) =>
         val newCases =
