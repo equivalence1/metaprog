@@ -3,14 +3,6 @@ package ru.mit.supercompilation.parser
 import scala.util.parsing.combinator.Parsers
 import scala.util.parsing.input.{NoPosition, Position, Reader}
 
-sealed trait ExprAst
-// It's impossible to distinguish variables from functions at this point,
-// only ExprBuilder can do this.
-// Thus IdentifierNode, not VarNode and FunNode
-case class IdentifierNode(s: String) extends ExprAst
-case class LambdaNode(varNames: List[String], e: ExprAst) extends ExprAst
-case class AppNode(e1: ExprAst, e2: ExprAst) extends ExprAst
-
 class TokenReader(tokens: Seq[Token]) extends Reader[Token] {
   override def first: Token = tokens.head
   override def atEnd: Boolean = tokens.isEmpty
@@ -19,7 +11,7 @@ class TokenReader(tokens: Seq[Token]) extends Reader[Token] {
 }
 
 /**
-  * Parses List[Token] produced by ProgLexer into ExprAst
+  * Parses List[Token] produced by Lexer into ExprAst
   */
 object TokensParser extends Parsers {
   override type Elem = Token
@@ -55,8 +47,8 @@ object TokensParser extends Parsers {
   }
 }
 
-object ProgParser {
+object Parser {
   def apply(code: String): ExprAst = {
-    TokensParser(ProgLexer(code))
+    TokensParser(Lexer(code))
   }
 }

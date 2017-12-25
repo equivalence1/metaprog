@@ -1,6 +1,7 @@
 package ru.mit.supercompilation.printer
 
 import ru.mit.supercompilation.Types._
+import ru.mit.supercompilation.reducer.Types._
 
 object ExprPrinter {
 

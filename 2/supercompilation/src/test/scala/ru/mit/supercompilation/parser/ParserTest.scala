@@ -6,7 +6,7 @@ class ParserTest extends FunSuite {
   test("Parser: lambda-expr success 1") {
     val expectedAst = LambdaNode("x" :: Nil, IdentifierNode("x"))
     assertResult(expectedAst) {
-      ProgParser("(\\x . x)")
+      Parser("(\\x . x)")
     }
   }
 
@@ -19,32 +19,32 @@ class ParserTest extends FunSuite {
         IdentifierNode("x"))),
       LambdaNode("x" :: Nil, IdentifierNode("x")))
     assertResult(expectedAst) {
-      ProgParser("(\\x . (\\y . y x) x) (\\x . x)")
+      Parser("(\\x . (\\y . y x) x) (\\x . x)")
     }
   }
 
   test("Parser: application without braces success") {
     val expectedAst = AppNode(AppNode(IdentifierNode("x"), IdentifierNode("y")), IdentifierNode("z"))
     assertResult(expectedAst) {
-      ProgParser("x y z")
+      Parser("x y z")
     }
   }
 
   test("Parser: lambda-expr fail 1") {
     assertThrows[RuntimeException] {
-      ProgParser("(\\x . (\\y . y x x) (\\x . x)")
+      Parser("(\\x . (\\y . y x x) (\\x . x)")
     }
   }
 
   test("Parser: lambda-expr fail 2") {
     assertThrows[RuntimeException] {
-      ProgParser("(\\x . (\\y  y x) x) (\\x . x)")
+      Parser("(\\x . (\\y  y x) x) (\\x . x)")
     }
   }
 
   test("Parser: lambda-expr fail 3") {
     assertThrows[RuntimeException] {
-      ProgParser("(\\x . (\\y . y . x) x) (\\x . x)")
+      Parser("(\\x . (\\y . y . x) x) (\\x . x)")
     }
   }
 }

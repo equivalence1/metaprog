@@ -3,31 +3,50 @@ package ru.mit.supercompilation.parser
 import scala.util.matching.Regex
 import scala.util.parsing.combinator.RegexParsers
 
-sealed trait Token
-case class IDENTIFIER(s: String) extends Token
-case object LAMBDA extends Token
-case object DOT extends Token
-case object OPEN_BRACKET extends Token
-case object CLOSE_BRACKET extends Token
-
 /**
   * We want to be able to parse regular string input (i.e. file with program) so we don't
   * have to build Expr manually. Thus Lexer + Parser.
   *
   * This lexer splits input string into List[Token]
   */
-object ProgLexer extends RegexParsers {
+object Lexer extends RegexParsers {
   override def skipWhitespace = true
-  override val whiteSpace: Regex = "[ \t\r\f]+".r
+  override val whiteSpace: Regex = "[ \t\r\f\n]+".r
 
   def identifier:    Parser[IDENTIFIER]         = "[a-zA-Z_][a-zA-Z0-9_]*".r  ^^   {str => IDENTIFIER(str)}
   def lambda:        Parser[LAMBDA.type]        = "\\"                        ^^   {_ => LAMBDA}
   def dot:           Parser[DOT.type]           = "."                         ^^   {_ => DOT}
-  def open_bracket:  Parser[OPEN_BRACKET.type]  = "("                         ^^   {_ => OPEN_BRACKET}
-  def close_bracket: Parser[CLOSE_BRACKET.type] = ")"                         ^^   {_ => CLOSE_BRACKET}
+  def openBracket:   Parser[OPEN_BRACKET.type]  = "("                         ^^   {_ => OPEN_BRACKET}
+  def closeBracket:  Parser[CLOSE_BRACKET.type] = ")"                         ^^   {_ => CLOSE_BRACKET}
+  def curlyOpen:     Parser[CURLY_OPEN.type]    = "{"                         ^^   {_ => CURLY_OPEN}
+  def curlyClose:    Parser[CURLY_CLOSE.type]   = "}"                         ^^   {_ => CURLY_CLOSE}
+  def let:           Parser[LET.type]           = "let"                       ^^   {_ => LET}
+  def in:            Parser[IN.type]            = "in"                        ^^   {_ => IN}
+  def _case:         Parser[CASE.type]          = "case"                      ^^   {_ => CASE}
+  def of:            Parser[OF.type]            = "of"                        ^^   {_ => OF}
+  def arrow:         Parser[ARROW.type]         = "->"                        ^^   {_ => ARROW}
+  def alternation:   Parser[ALTERNATION.type]   = "|"                         ^^   {_ => ALTERNATION}
+  def assignment:    Parser[ASSIGNMENT.type]    = "="                         ^^   {_ => ASSIGNMENT}
+  def where:         Parser[WHERE.type]         = "where"                     ^^   {_ => WHERE}
 
-  def tokenize: Parser[List[Token]] = {
-    phrase(rep1(identifier | lambda | dot | open_bracket | close_bracket))
+  private def tokenize: Parser[List[Token]] = {
+    phrase(rep1(
+        lambda
+        | dot
+        | openBracket
+        | closeBracket
+        | curlyOpen
+        | curlyClose
+        | let
+        | in
+        | _case
+        | of
+        | arrow
+        | alternation
+        | assignment
+        | where
+        | identifier
+    ))
   }
 
   def apply(code: String): List[Token] = {

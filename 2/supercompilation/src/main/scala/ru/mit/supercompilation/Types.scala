@@ -1,21 +1,20 @@
 package ru.mit.supercompilation
 
+/**
+  * Common types for all stages of supercompilation
+  */
 object Types {
+
+  // Expr-related
+
   sealed trait Expr
   case class Var(v: Int) extends Expr
   case class Lambda(e: Expr) extends Expr
   case class App(e1: Expr, e2: Expr) extends Expr
-//  case class Let(e1: Expr, e2: Expr) extends Expr
-//  case class Fun(s: String) extends Expr
-//  case class Constr(s: String, es: List[Expr]) extends Expr
-//  case class Case(e: Expr, cases: List[(String, List[Expr], Expr)]) extends Expr
+  //  case class Let(e1: Expr, e2: Expr) extends Expr
+  //  case class Fun(s: String) extends Expr
+  //  case class Constr(s: String, es: List[Expr]) extends Expr
+  //  case class Case(e: Expr, cases: List[(String, List[Expr], Expr)]) extends Expr
 
-  class Prog(e: Expr, funs: List[(String, Expr)])
-
-  sealed trait ContextLevel
-  case class AppCtx(e: Expr) extends ContextLevel
-  case object LambdaCtx extends ContextLevel
-
-  type Context = List[ContextLevel]
-  type ReducedExpr = (Expr, Context)
+  type Program = (Expr, List[(String, Expr)])
 }
