@@ -12,26 +12,26 @@ class LexerTest extends FunSuite {
   }
 
   test("Lexer: let-expr") {
-    assertResult(LET :: IDENTIFIER("x") :: ASSIGNMENT :: IDENTIFIER("Nil") :: IN :: IDENTIFIER("x") :: Nil) {
+    assertResult(LET :: IDENTIFIER("x") :: ASSIGNMENT :: CONSTRUCTOR("Nil") :: IN :: IDENTIFIER("x") :: Nil) {
       Lexer("let x = Nil in x")
     }
   }
 
   test("Lexer: case-expr") {
-    assertResult(CASE :: IDENTIFIER("x") :: OF :: CURLY_OPEN :: IDENTIFIER("Nil") :: ARROW ::
-      IDENTIFIER("y") :: ALTERNATION :: IDENTIFIER("Cons") :: IDENTIFIER("a") :: IDENTIFIER("b") ::
+    assertResult(CASE :: IDENTIFIER("x") :: OF :: CURLY_OPEN :: CONSTRUCTOR("Nil") :: ARROW ::
+      IDENTIFIER("y") :: ALTERNATION :: CONSTRUCTOR("Cons") :: IDENTIFIER("a") :: IDENTIFIER("b") ::
       ARROW :: IDENTIFIER("z") :: CURLY_CLOSE :: Nil) {
       Lexer("case x of {Nil -> y | Cons a b -> z}")
     }
   }
 
   test("Lexer: full program") {
-    assertResult(LET :: IDENTIFIER("x") :: ASSIGNMENT :: IDENTIFIER("f") :: IDENTIFIER("Z") :: IN :: IDENTIFIER("x") ::
-      WHERE :: IDENTIFIER("f") :: ASSIGNMENT :: LAMBDA :: IDENTIFIER("x") :: DOT :: IDENTIFIER("x") :: Nil) {
+    assertResult(LET :: IDENTIFIER("x") :: ASSIGNMENT :: IDENTIFIER("f") :: CONSTRUCTOR("Z") :: IN :: IDENTIFIER("x") ::
+      WHERE :: IDENTIFIER("f") :: ASSIGNMENT :: LAMBDA :: IDENTIFIER("x") :: DOT :: IDENTIFIER("x") :: SEMICOLON :: Nil) {
       Lexer(
         """let x = f Z in x
           | where
-          |   f = \x . x
+          |   f = \x . x;
         """.stripMargin)
     }
   }

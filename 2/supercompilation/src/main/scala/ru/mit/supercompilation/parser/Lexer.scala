@@ -13,7 +13,8 @@ object Lexer extends RegexParsers {
   override def skipWhitespace = true
   override val whiteSpace: Regex = "[ \t\r\f\n]+".r
 
-  def identifier:    Parser[IDENTIFIER]         = "[a-zA-Z_][a-zA-Z0-9_]*".r  ^^   {str => IDENTIFIER(str)}
+  def identifier:    Parser[IDENTIFIER]         = "[a-z_][a-zA-Z0-9_]*".r     ^^   {str => IDENTIFIER(str)}
+  def constructor:   Parser[CONSTRUCTOR]        = "[A-Z][a-zA-Z0-9_]*".r      ^^   {str => CONSTRUCTOR(str)}
   def lambda:        Parser[LAMBDA.type]        = "\\"                        ^^   {_ => LAMBDA}
   def dot:           Parser[DOT.type]           = "."                         ^^   {_ => DOT}
   def openBracket:   Parser[OPEN_BRACKET.type]  = "("                         ^^   {_ => OPEN_BRACKET}
@@ -28,6 +29,7 @@ object Lexer extends RegexParsers {
   def alternation:   Parser[ALTERNATION.type]   = "|"                         ^^   {_ => ALTERNATION}
   def assignment:    Parser[ASSIGNMENT.type]    = "="                         ^^   {_ => ASSIGNMENT}
   def where:         Parser[WHERE.type]         = "where"                     ^^   {_ => WHERE}
+  def semicolon:     Parser[SEMICOLON.type ]    = ";"                         ^^   {_ => SEMICOLON}
 
   private def tokenize: Parser[List[Token]] = {
     phrase(rep1(
@@ -45,7 +47,9 @@ object Lexer extends RegexParsers {
         | alternation
         | assignment
         | where
+        | semicolon
         | identifier
+        | constructor
     ))
   }
 
