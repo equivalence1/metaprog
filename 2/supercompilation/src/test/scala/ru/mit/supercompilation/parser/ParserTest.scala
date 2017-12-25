@@ -23,6 +23,13 @@ class ParserTest extends FunSuite {
     }
   }
 
+  test("Parser: application without braces success") {
+    val expectedAst = AppNode(AppNode(VarNode("x"), VarNode("y")), VarNode("z"))
+    assertResult(expectedAst) {
+      ProgParser("x y z")
+    }
+  }
+
   test("Parser: lambda-expr fail 1") {
     assertThrows[RuntimeException] {
       ProgParser("(\\x . (\\y . y x x) (\\x . x)")

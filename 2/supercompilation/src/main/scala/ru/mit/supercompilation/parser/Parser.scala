@@ -38,8 +38,8 @@ object TokensParser extends Parsers {
     val lambda = LAMBDA ~ rep1(identifier) ~ DOT ~ expr ^^ {
       case _ ~ vars ~ _ ~ e => LambdaNode(vars.map(identifier => identifier.s), e)
     }
-    val app = (variable | innerExpr) ~ (variable | innerExpr) ^^ {
-      case e1 ~ e2 => AppNode(e1, e2)
+    val app: Parser[ExprAst] = (variable | innerExpr) ~ rep1(variable | innerExpr) ^^ {
+      case e1 ~ es => es.foldLeft(e1) {(app: ExprAst, e: ExprAst) => AppNode(app, e)}
     }
     app | lambda | innerExpr | variable // Order is important. app must go before variable and innerExpr
   }
