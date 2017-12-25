@@ -9,10 +9,10 @@ class ExprBuilderTest extends FunSuite {
       ExprBuilder(AppNode(
         LambdaNode("x" :: Nil, AppNode(
           LambdaNode("y" :: Nil, AppNode(
-            VarNode("y"),
-            VarNode("x"))),
-          VarNode("x"))),
-        LambdaNode("x" :: Nil, VarNode("x"))))
+            IdentifierNode("y"),
+            IdentifierNode("x"))),
+          IdentifierNode("x"))),
+        LambdaNode("x" :: Nil, IdentifierNode("x"))))
     }
   }
 }

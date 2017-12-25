@@ -4,7 +4,7 @@ import org.scalatest.FunSuite
 
 class ParserTest extends FunSuite {
   test("Parser: lambda-expr success 1") {
-    val expectedAst = LambdaNode("x" :: Nil, VarNode("x"))
+    val expectedAst = LambdaNode("x" :: Nil, IdentifierNode("x"))
     assertResult(expectedAst) {
       ProgParser("(\\x . x)")
     }
@@ -14,17 +14,17 @@ class ParserTest extends FunSuite {
     val expectedAst = AppNode(
       LambdaNode("x" :: Nil, AppNode(
         LambdaNode("y" :: Nil, AppNode(
-          VarNode("y"),
-          VarNode("x"))),
-        VarNode("x"))),
-      LambdaNode("x" :: Nil, VarNode("x")))
+          IdentifierNode("y"),
+          IdentifierNode("x"))),
+        IdentifierNode("x"))),
+      LambdaNode("x" :: Nil, IdentifierNode("x")))
     assertResult(expectedAst) {
       ProgParser("(\\x . (\\y . y x) x) (\\x . x)")
     }
   }
 
   test("Parser: application without braces success") {
-    val expectedAst = AppNode(AppNode(VarNode("x"), VarNode("y")), VarNode("z"))
+    val expectedAst = AppNode(AppNode(IdentifierNode("x"), IdentifierNode("y")), IdentifierNode("z"))
     assertResult(expectedAst) {
       ProgParser("x y z")
     }

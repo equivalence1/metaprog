@@ -10,7 +10,7 @@ import ru.mit.supercompilation.Types._
 object ExprBuilder {
   private def build(ast: ExprAst, scopeVariablesStack: List[String]): Expr = {
     ast match {
-      case VarNode(name) => Var(scopeVariablesStack.indexOf(name))
+      case IdentifierNode(name) => Var(scopeVariablesStack.indexOf(name))
       case LambdaNode(vars, e) => vars match {
         case x :: xs => Lambda(build(LambdaNode(xs, e), x :: scopeVariablesStack))
         case Nil => build(e, scopeVariablesStack)
