@@ -124,7 +124,7 @@ object AstTransformer {
       case LetNode(varName, e1, e2) =>
         Let(exprTransform(e1, scopeVariablesStack), exprTransform(e2, varName :: scopeVariablesStack))
 
-      case CaseNode(e, cases) =>
+      case CaseNode(selector, cases) =>
         val newCases =
           cases.map { a =>
             val c = a._1
@@ -132,7 +132,7 @@ object AstTransformer {
             val newScope = c.args.reverse ++ scopeVariablesStack
             (c.name, c.args.size, exprTransform(e, newScope))
           }
-        Case(exprTransform(e, scopeVariablesStack), newCases)
+        Case(exprTransform(selector, scopeVariablesStack), newCases)
 
       case CaseConstructorNode(_, _) => throw new RuntimeException("CaseConstructorNode outside case")
     }

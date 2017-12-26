@@ -37,7 +37,7 @@ package object parser {
   case class AppNode(e1: ExprAst, e2: ExprAst) extends ExprAst
   case class LetNode(varName: String, e1: ExprAst, e2: ExprAst) extends ExprAst
   case class CaseConstructorNode(name: String, args: List[String]) extends ExprAst
-  case class CaseNode(e: ExprAst, cases: List[(CaseConstructorNode, ExprAst)]) extends ExprAst
+  case class CaseNode(selector: ExprAst, cases: List[(CaseConstructorNode, ExprAst)]) extends ExprAst
 
   type ProgramAst = (ExprAst, List[(String, ExprAst)])
 }

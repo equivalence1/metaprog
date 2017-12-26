@@ -1,7 +1,6 @@
 package ru.mit.supercompilation.printer
 
 import ru.mit.supercompilation.Types._
-import ru.mit.supercompilation.reducer.Types._
 
 object ProgPrinter {
 
@@ -46,9 +45,9 @@ object ProgPrinter {
         sb.append(name)
         es.foreach(e => {sb.append(" "); print(e, namesStack)})
 
-      case Case(caseExpr, cases) =>
+      case Case(selector, cases) =>
         sb.append("case ")
-        print(caseExpr, namesStack)
+        print(selector, namesStack)
         sb.append(" of {")
         var first = true
         for ((constrName, varsNr, caseExpr) <- cases) {
@@ -73,13 +72,13 @@ object ProgPrinter {
     }
   }
 
-  private def restoreExpr(rExpr: ReducedExpr): Expr = {
-    rExpr match {
-      case (e, Nil) => e
-      case (e, LambdaCtx :: ctx) => restoreExpr(Lambda(e), ctx)
-      case (e, (AppCtx(e1)) :: ctx) => restoreExpr(App(e, e1), ctx)
-    }
-  }
+//  private def restoreExpr(rExpr: ReducedExpr): Expr = {
+//    rExpr match {
+//      case (e, Nil) => e
+//      case (e, LambdaCtx :: ctx) => restoreExpr(Lambda(e), ctx)
+//      case (e, (AppCtx(e1)) :: ctx) => restoreExpr(App(e, e1), ctx)
+//    }
+//  }
 
   def apply(e: Expr): String = {
     sb = new StringBuilder
@@ -97,13 +96,13 @@ object ProgPrinter {
     val result: StringBuilder = new StringBuilder
     result.append(apply(prog._1))
     if (funcs.nonEmpty) {
-      result.append("\n  where\n")
+      result.append("\n  where")
       for ((funName, funExpr) <- prog._2) {
-        result.append("    ")
+        result.append("\n    ")
         result.append(funName)
         result.append(" = ")
         result.append(apply(funExpr))
-        result.append(";\n")
+        result.append(";")
       }
     }
 
