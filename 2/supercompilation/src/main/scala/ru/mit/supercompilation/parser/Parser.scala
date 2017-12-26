@@ -94,6 +94,8 @@ object Parser extends Parsers {
 /**
   * Last stage of parsing.
   * Now we need to transform from [[ProgramAst]] into [[ru.mit.supercompilation.Types.Program]]
+  * The main task is to transform identifiers into Fun, GlobalVar or Var.
+  * Note that Expr uses de Bruijn indexes
   */
 object AstTransformer {
 
