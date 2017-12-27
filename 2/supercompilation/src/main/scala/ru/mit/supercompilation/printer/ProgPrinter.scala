@@ -13,6 +13,9 @@ object ProgPrinter {
       case Var(n) =>
         sb.append(namesStack(n))
 
+      case ConfVar(id) =>
+        sb.append("y" + id)
+
       case GlobalVar(name) =>
         sb.append(name)
 

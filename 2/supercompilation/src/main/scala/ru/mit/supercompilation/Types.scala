@@ -5,10 +5,15 @@ package ru.mit.supercompilation
   */
 object Types {
 
-  // Expr-related
+  // Expressions {{{
 
   sealed trait Expr
+
   case class Var(v: Int) extends Expr // bounded variable
+  // unbounded variable. We only generate them during generalization and make them
+  // function's arguments in the end
+  case class ConfVar(v: Int) extends Expr
+
   case class GlobalVar(name: String) extends Expr // We will never substitute into global var, so just use string, not index
   case class Lambda(e: Expr) extends Expr
   case class App(e1: Expr, e2: Expr) extends Expr
@@ -17,6 +22,10 @@ object Types {
   case class Constr(name: String, es: List[Expr]) extends Expr
   case class Case(selector: Expr, cases: List[(String, Int, Expr)]) extends Expr
 
+  // }}}
+
   type FunDef = (String, Expr)
   type Program = (Expr, List[FunDef])
+
+  type Substitution = List[(ConfVar, Expr)]
 }
