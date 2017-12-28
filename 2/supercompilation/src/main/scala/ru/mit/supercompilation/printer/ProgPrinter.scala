@@ -65,7 +65,7 @@ object ProgPrinter {
             val varName = "x" + (id + namesStack.size)
             sb.append(" ")
             sb.append(varName)
-            newNamesStack = varName :: namesStack
+            newNamesStack = varName :: newNamesStack
           }
 
           sb.append(" -> ")
