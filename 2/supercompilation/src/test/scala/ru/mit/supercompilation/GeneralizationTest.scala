@@ -95,8 +95,7 @@ class GeneralizationTest extends FunSuite {
       generalization._1
     }
     assertResult(sRes1) {
-      val tmp = subst(generalization._1, generalization._2)
-      exprToString(tmp)
+      exprToString(subst(generalization._1, generalization._2))
     }
     assertResult(sRes2) {
       exprToString(subst(generalization._1, generalization._3))
