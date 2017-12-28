@@ -48,6 +48,13 @@ class ParserTest extends FunSuite {
     }
   }
 
+  test("constructor success") {
+    val expected = ConstructorNode("C", List(IdentifierNode("a"), IdentifierNode("b")))
+    assertResult(expected) {
+      Parser("C a b")._1
+    }
+  }
+
   test("let-expr success") {
     val expected = LambdaNode("x" :: Nil,
       LetNode("y", AppNode(IdentifierNode("f"), IdentifierNode("x")), IdentifierNode("y")))

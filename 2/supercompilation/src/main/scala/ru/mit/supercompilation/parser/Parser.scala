@@ -61,7 +61,7 @@ object Parser extends Parsers {
       case _ ~ e ~ _ ~ _ ~ cases ~ _ => CaseNode(e, cases)
     }
 
-    _case | let | lambda | app | constructor | base
+    _case | let | lambda | constructor | app | base
   }
 
   private def functionDefinition: Parser[(String, ExprAst)] = {
