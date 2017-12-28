@@ -13,6 +13,7 @@ object Subst {
 
     expr match {
       case Var(v) => if (v >= from) Var(v + k) else Var(v)
+      case cf@ConfVar(_) => cf
       case gv@GlobalVar(_) => gv
       case Lambda(e) => Lambda(shiftN(from + 1, k, e))
       case App(e1, e2) => App(shift(e1), shift(e2))
@@ -74,10 +75,11 @@ object Subst {
 
   def subst(origE: Expr, s: Substitution): Expr = {
     s.foldLeft(origE) { (e, s) =>
-      if (!isClosure(s._2)) {
-        throw new IllegalArgumentException(s._2 + " is not a valid substitution")
-      }
-      substConf(s._1.v, e, s._2)
+        // TODO: do I need it or not?
+//      if (!isClosure(s._2)) {
+//        throw new IllegalArgumentException(s._2 + " is not a valid substitution")
+//      }
+      substConf(s._1.id, e, s._2)
     }
   }
 }

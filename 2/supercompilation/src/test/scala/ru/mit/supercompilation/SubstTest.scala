@@ -13,7 +13,7 @@ import ru.mit.supercompilation.Types._
 class SubstTest extends FunSuite {
   test("lambda expr") {
     assertResult("""((\x0 . (v x0)) (\x0 . (\x1 . (x0 (\x2 . (v x2))))))""") {
-      ExprToString(subst(App(Var(0), Lambda(Lambda(App(Var(1), Var(2))))), Lambda(App(GlobalVar("v"), Var(0)))))
+      exprToString(subst(App(Var(0), Lambda(Lambda(App(Var(1), Var(2))))), Lambda(App(GlobalVar("v"), Var(0)))))
     }
   }
 
@@ -39,7 +39,7 @@ class SubstTest extends FunSuite {
       val substCase = Case(Var(0), substBranches)
       val substE = Lambda(substCase)
 
-      ExprToString(subst(origE, substE))
+      exprToString(subst(origE, substE))
     }
   }
 }

@@ -12,7 +12,11 @@ object Types {
   case class Var(v: Int) extends Expr // bounded variable
   // unbounded variable. We only generate them during generalization and make them
   // function's arguments in the end
-  case class ConfVar(v: Int) extends Expr
+  case class ConfVar(id: Int) extends Expr with Ordered[ConfVar] {
+    // TODO only need it in generalization -- move it there
+    import scala.math.Ordered.orderingToOrdered
+    def compare(that: ConfVar): Int = (this.id, this.id) compare (that.id, that.id)
+  }
 
   case class GlobalVar(name: String) extends Expr // We will never substitute into global var, so just use string, not index
   case class Lambda(e: Expr) extends Expr

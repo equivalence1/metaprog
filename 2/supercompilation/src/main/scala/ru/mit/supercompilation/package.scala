@@ -18,12 +18,16 @@ package object supercompilation {
     ProgPrinter(prog)
   }
 
-  def ExprToString(expr: Expr): String = {
+  def exprToString(expr: Expr): String = {
     progToString((expr, Nil))
   }
 
   def subst(origE: Expr, substE: Expr): Expr = {
     Subst.subst(origE, substE)
+  }
+
+  def subst(origE: Expr, substitution: Substitution): Expr = {
+    Subst.subst(origE, substitution)
   }
 
   def shift(k: Int, e: Expr): Expr = {
@@ -41,7 +45,7 @@ package object supercompilation {
         case ConfVar(_) => true
         case GlobalVar(_) => true
         case Fun(_) => true
-        case Lambda(`e`) => isClosure(e, n + 1)
+        case Lambda(e1) => isClosure(e1, n + 1)
         case App(e1, e2) => isClosure(e1, n) && isClosure(e2, n)
         case Let(e1, e2) => isClosure(e1, n) && isClosure(e2, n + 1)
         case Constr(_, es) => es.count(e => isClosure(e, n)) == es.size
@@ -52,19 +56,25 @@ package object supercompilation {
     isClosure(e, 0)
   }
 
-  def nextFreeIndex(e: Expr): Int = {
-    e match {
-      case Var(_) => 0
-      case ConfVar(id) => id + 1
-      case GlobalVar(_) => 0
-      case Fun(_) => 0
-      case Lambda(`e`) => nextFreeIndex(e)
-      case App(e1, e2) => Math.max(nextFreeIndex(e1), nextFreeIndex(e2))
-      case Let(e1, e2) => Math.max(nextFreeIndex(e1), nextFreeIndex(e2))
-      case Constr(_, es) => nextFreeIndex(es.maxBy(e => nextFreeIndex(e)))
-      case Case(selector, cases) => Math.max(nextFreeIndex(selector),
-        nextFreeIndex(cases.maxBy(c => nextFreeIndex(c._3))._3))
+  def nextFreeIndex(/*e: Expr*/): Int = {
+//    e match {
+//      case Var(_) => 0
+//      case ConfVar(id) => id + 1
+//      case GlobalVar(_) => 0
+//      case Fun(_) => 0
+//      case Lambda(e) => nextFreeIndex(e)
+//      case App(e1, e2) => Math.max(nextFreeIndex(e1), nextFreeIndex(e2))
+//      case Let(e1, e2) => Math.max(nextFreeIndex(e1), nextFreeIndex(e2))
+//      case Constr(_, es) => nextFreeIndex(es.maxBy(e => nextFreeIndex(e)))
+//      case Case(selector, cases) => Math.max(nextFreeIndex(selector),
+//        nextFreeIndex(cases.maxBy(c => nextFreeIndex(c._3))._3))
+//    }
+    object helper {
+      var nextId: Int = -1
     }
+
+    helper.nextId += 1
+    helper.nextId
   }
 
 }
