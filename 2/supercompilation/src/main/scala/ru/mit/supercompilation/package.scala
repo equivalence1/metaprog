@@ -38,6 +38,10 @@ package object supercompilation {
     prog._2.find(fDef => fDef._1 == fName).get._2
   }
 
+  def generalize(e1: Expr, e2: Expr): Generalization.Generalization = {
+    Generalization(e1, e2)
+  }
+
   def isClosure(e: Expr): Boolean = {
     def isClosure(e: Expr, n: Int): Boolean = {
       e match {
@@ -56,7 +60,8 @@ package object supercompilation {
     isClosure(e, 0)
   }
 
-  private var nextId: Int = -1
+  // TODO: bad that global -- affects testing, need to invalidate each time
+  private[supercompilation] var nextId: Int = -1
 
   def nextFreeIndex(/*e: Expr*/): Int = {
 //    e match {

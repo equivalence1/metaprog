@@ -14,17 +14,47 @@ object Generalization {
   private def commonFunctorRule(e1: Expr, e2: Expr): Generalization = {
     (e1, e2) match {
       case (v@Var(n), Var(m)) if n == m => (v, Nil, Nil)
-      case (v@GlobalVar(n), GlobalVar(m)) if n == m => (v, Nil, Nil)
+      case (v@GlobalVar(name1), GlobalVar(name2)) if name1.equals(name2) => (v, Nil, Nil)
       case (v@ConfVar(n), ConfVar(m)) if n == m => (v, Nil, Nil)
+      case (f@Fun(name1), Fun(name2)) if name1 == name2 => (f, Nil, Nil)
+
+      case (Lambda(le1), Lambda(le2)) =>
+        val innerG = commonFunctorRule(le1, le2)
+        (Lambda(innerG._1), innerG._2, innerG._3)
 
       case (App(e11, e12), App(e21, e22)) =>
         val res1 = commonFunctorRule(e11, e21)
         val res2 = commonFunctorRule(e12, e22)
         (App(res1._1, res2._1), res1._2 ++ res2._2, res1._3 ++ res2._3)
 
-      case (Lambda(le1), Lambda(le2)) =>
-        val innerG = commonFunctorRule(le1, le2)
-        (Lambda(innerG._1), innerG._2, innerG._3)
+      case (Let(e11, e12), Let(e21, e22)) =>
+        val res1 = commonFunctorRule(e11, e21)
+        val res2 = commonFunctorRule(e12, e22)
+        (Let(res1._1, res2._1), res1._2 ++ res2._2, res1._3 ++ res2._3)
+
+      case (Constr(name1, es1), Constr(name2, es2)) if name1 == name2 =>
+        val esGeneralizations = es1.zip(es2).map(e => commonFunctorRule(e._1, e._2))
+        val newEs = esGeneralizations.map(_._1)
+        val newSubst1 = esGeneralizations.flatMap(_._2)
+        val newSubst2 = esGeneralizations.flatMap(_._3)
+        (Constr(name1, newEs), newSubst1, newSubst2)
+
+      case (Case(selector1, cases1), Case(selector2, cases2))
+          if cases1.map(_._1).sorted.equals(cases2.map(_._1).sorted) =>
+        val sortedCases1 = cases1.sortBy(_._1)
+        val sortedCases2 = cases2.sortBy(_._1)
+        val selectorsG = commonFunctorRule(selector1, selector2)
+        val casesG = sortedCases1.zip(sortedCases2).map(_case => (_case._1._1, _case._1._2,
+            commonFunctorRule(_case._1._3, _case._2._3)))
+
+        val genSelector = selectorsG._1
+        val genCases = casesG.map(gcase => (gcase._1, gcase._2, gcase._3._1))
+
+        val genExpr = Case(genSelector, genCases)
+        val subst1 =  casesG.flatMap(gcase => gcase._3._2)
+        val subst2 =  casesG.flatMap(gcase => gcase._3._3)
+
+        (genExpr, subst1, subst2)
 
       case _ =>
         val cf = ConfVar(nextFreeIndex())
