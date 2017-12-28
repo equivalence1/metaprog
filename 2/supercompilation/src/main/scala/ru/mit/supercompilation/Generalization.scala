@@ -8,11 +8,7 @@ object Generalization {
 
   def compactGeneralization(e1: Expr, e2: Expr): Generalization = {
     val commonFunctor = commonFunctorRule(e1, e2)
-    val r = commonSubExprRule((commonFunctor._1, commonFunctor._2.sortBy(_._1), commonFunctor._3.sortBy(_._1)))
-    println(r._1)
-    println(r._2)
-    println(r._3)
-    r
+    commonSubExprRule((commonFunctor._1, commonFunctor._2.sortBy(_._1), commonFunctor._3.sortBy(_._1)))
   }
 
   private def commonFunctorRule(e1: Expr, e2: Expr): Generalization = {

@@ -56,6 +56,8 @@ package object supercompilation {
     isClosure(e, 0)
   }
 
+  private var nextId: Int = -1
+
   def nextFreeIndex(/*e: Expr*/): Int = {
 //    e match {
 //      case Var(_) => 0
@@ -69,12 +71,9 @@ package object supercompilation {
 //      case Case(selector, cases) => Math.max(nextFreeIndex(selector),
 //        nextFreeIndex(cases.maxBy(c => nextFreeIndex(c._3))._3))
 //    }
-    object helper {
-      var nextId: Int = -1
-    }
 
-    helper.nextId += 1
-    helper.nextId
+    nextId += 1
+    nextId
   }
 
 }
