@@ -11,7 +11,7 @@ class GeneralizationTest extends FunSuite {
     val e2 = parseExpr("""\c . \d . d glob""")
     val generalization = Generalization(e1, e2)
 
-    assertResult(Lambda(Lambda(App(Var(0), GlobalVar("glob"))))) {
+    assertResult(Lambda(Lambda(App(BVar(0), GlobalVar("glob"))))) {
       generalization._1
     }
     assertResult("""(\x0 . (\x1 . (x1 glob)))""") {
@@ -43,7 +43,7 @@ class GeneralizationTest extends FunSuite {
     val e2 = parseExpr("""Constr (\b . b b) (b)""")
     val sRes1 = """Constr (\x0 . (x0 b)) b"""
     val sRes2 = """Constr (\x0 . (x0 x0)) b"""
-    val eRes = Constr("Constr", List(Lambda(App(Var(0), ConfVar(0))), GlobalVar("b")))
+    val eRes = Constr("Constr", List(Lambda(App(BVar(0), ConfVar(0))), GlobalVar("b")))
 
     val generalization = Generalization(e1, e2)
 

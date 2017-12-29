@@ -1,13 +1,13 @@
 package ru.mit.supercompilation.printer
 
 import org.scalatest.FunSuite
-import ru.mit.supercompilation.Types.{App, Lambda, Var}
+import ru.mit.supercompilation.Types.{App, BVar, Lambda}
 import ru.mit.supercompilation.parser.{AstTransformer, Parser}
 
 class ExprPrinterTest extends FunSuite {
   test("lambda-expr") {
     assertResult("((\\x0 . ((\\x1 . (x1 x0)) x0)) (\\x0 . x0))") {
-      ProgPrinter(App(Lambda(App(Lambda(App(Var(0), Var(1))), Var(0))), Lambda(Var(0))))
+      ProgPrinter(App(Lambda(App(Lambda(App(BVar(0), BVar(1))), BVar(0))), Lambda(BVar(0))))
     }
   }
 

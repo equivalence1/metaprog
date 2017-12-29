@@ -1,19 +1,79 @@
 package ru.mit.supercompilation.reducer
 
 import org.scalatest.FunSuite
+import ru.mit.supercompilation.Types._
+import ru.mit.supercompilation._
 
 class ReducerTest extends FunSuite {
-//  test("reducer lambda-expr 1") {
-//    assertResult((Lambda(Var(0)), Nil)) {
-//      Reducer.reduce(App(Lambda(App(Lambda(App(Var(0), Var(1))), Var(0))), Lambda(Var(0))), Nil)
-//    }
-//  }
-//
-//  test("Danya's test -- reduce + restore") {
-//    assertResult("(\\x0 . (\\x1 . (\\x2 . (\\x3 . ((x0 x2) ((x1 x2) x3))))))") {
-//      val ast = Parser("(\\ t1 . ((t1 (\\ n a1 x1 . n (\\ sva2 zva2 . ((a1 sva2) ((x1 sva2) zva2))))) (\\ a . a)) (\\ s z . z)) (\\ s1 z1 . s1 (s1 z1))")
-////      ExprPrinter(Reducer.reduce(ProgramAstTransformer(ast), Nil))
-//      null
-//    }
-//  }
+
+  // normalization tests
+
+  test("normalization lambda obs") {
+    val sExpr = """\x . x x"""
+    assertResult((Lambda(App(BVar(0), BVar(0))), Nil)) {
+      normalize(parseExpr(sExpr))
+    }
+  }
+
+  test("normalization lambda redex") {
+    val sExpr = """(\x . x) x"""
+    assertResult((App(Lambda(BVar(0)), GlobalVar("x")), Nil)) {
+      normalize(parseExpr(sExpr))
+    }
+  }
+
+  test("normalization app") {
+    val sExpr = """x a"""
+    assertResult((App(GlobalVar("x"), GlobalVar("a")), Nil)) {
+      normalize(parseExpr(sExpr))
+    }
+  }
+
+  test("normalization case") {
+    val sExpr = """case f of {Nil -> Nil}"""
+    assertResult((Case(GlobalVar("f"), List(("Nil", 0, Constr("Nil", Nil)))), Nil)) {
+      normalize(parseExpr(sExpr))
+    }
+  }
+
+  // reduce tests
+
+  test("reduceStep app") {
+    val sExpr = """(\x . x) (\y . y)"""
+    assertResult("""(\x0 . x0)""") {
+      exprToString(Reducer.nReduceStep(normalize(parseExpr(sExpr)), Nil)._2._1)
+    }
+  }
+
+  test("reduceStep lambda") {
+    val sExpr = """(\x . \y . \z . f) (\y . y)"""
+    assertResult("""(\x0 . (\x1 . f))""") {
+      exprToString(Reducer.nReduceStep(normalize(parseExpr(sExpr)), Nil)._2._1)
+    }
+  }
+
+  test("reduceStep case") {
+    val sExpr = """case Nil of {NotNil -> Nil | Nil -> case f of {Nil -> Nil}}"""
+    val reducedExpr = Reducer.nReduceStep(normalize(parseExpr(sExpr)), Nil)._2
+    assertResult("""case f of {Nil -> Nil}""") {
+      exprToString(reducedExpr._1)
+    }
+    assertResult(Nil) {
+      reducedExpr._2
+    }
+  }
+
+  test("reduce complex") {
+    val sProg =
+      """foo (case Nil of {NotNil -> Nil | Nil -> case (\x . x) NotNil of {NotNil -> Nil}})
+        |  where
+        |    foo = \x . case x of {NotNil -> Fail | Nil -> Success};
+      """.stripMargin
+    val prog = parseProg(sProg)
+    val reducedExpr = Reducer.nReduce(normalize(prog._1), prog._2)._2
+    assertResult("""Success""") {
+      exprToString(reducedExpr._1)
+    }
+  }
+
 }

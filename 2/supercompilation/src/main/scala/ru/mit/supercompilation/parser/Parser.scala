@@ -105,7 +105,7 @@ object AstTransformer {
     ast match {
       case IdentifierNode(name) =>
         if (scopeVariablesStack.contains(name)) {
-          Var(scopeVariablesStack.indexOf(name))
+          BVar(scopeVariablesStack.indexOf(name))
         } else if (functionsList.contains(name)) {
           Fun(name)
         } else {

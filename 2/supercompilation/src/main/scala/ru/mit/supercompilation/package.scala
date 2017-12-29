@@ -3,6 +3,8 @@ package ru.mit
 import ru.mit.supercompilation.Types._
 import ru.mit.supercompilation.parser.{AstTransformer, Parser}
 import ru.mit.supercompilation.printer.ProgPrinter
+import ru.mit.supercompilation.reducer.Reducer
+import ru.mit.supercompilation.reducer.Types.NormalizedExpr
 
 package object supercompilation {
 
@@ -22,8 +24,12 @@ package object supercompilation {
     progToString((expr, Nil))
   }
 
+  def substTo(index: Int, origE: Expr, substE: Expr): Expr = {
+    Subst.substTo(index, origE, substE)
+  }
+
   def subst(origE: Expr, substE: Expr): Expr = {
-    Subst.subst(origE, substE)
+    substTo(0, origE, substE)
   }
 
   def subst(origE: Expr, substitution: Substitution): Expr = {
@@ -34,18 +40,22 @@ package object supercompilation {
     Subst.shift(k, e)
   }
 
-  def unfold(fName: String, prog: Program): Expr = {
-    prog._2.find(fDef => fDef._1 == fName).get._2
+  def unfold(fName: String, fdefs: List[(String, Expr)]): Expr = {
+    fdefs.find(fDef => fDef._1 == fName).get._2
   }
 
   def generalize(e1: Expr, e2: Expr): Generalization.Generalization = {
     Generalization(e1, e2)
   }
 
+  def normalize(e1: Expr): NormalizedExpr = {
+    Reducer.normalize(e1, Nil)
+  }
+
   def isClosure(e: Expr): Boolean = {
     def isClosure(e: Expr, n: Int): Boolean = {
       e match {
-        case Var(v) => if (v >= n) false else true
+        case BVar(v) => if (v >= n) false else true
         case ConfVar(_) => true
         case GlobalVar(_) => true
         case Fun(_) => true

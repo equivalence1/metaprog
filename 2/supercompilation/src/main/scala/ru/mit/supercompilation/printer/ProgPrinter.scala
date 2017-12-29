@@ -10,7 +10,7 @@ object ProgPrinter {
   // TODO: to many ()
   private def print(e: Expr, namesStack: List[String]): Unit = {
     e match {
-      case Var(n) =>
+      case BVar(n) =>
         sb.append(namesStack(n))
 
       case ConfVar(id) =>

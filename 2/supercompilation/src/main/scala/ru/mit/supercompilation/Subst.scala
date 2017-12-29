@@ -12,7 +12,7 @@ object Subst {
     }
 
     expr match {
-      case Var(v) => if (v >= from) Var(v + k) else Var(v)
+      case BVar(v) => if (v >= from) BVar(v + k) else BVar(v)
       case cf@ConfVar(_) => cf
       case gv@GlobalVar(_) => gv
       case Lambda(e) => Lambda(shiftN(from + 1, k, e))
@@ -29,27 +29,27 @@ object Subst {
     shiftN(0, k, expr)
   }
 
-  private def substN(index: Int, origE: Expr, substE: Expr): Expr = {
+  def substTo(index: Int, origE: Expr, substE: Expr): Expr = {
     def subst(e: Expr): Expr = {
-      substN(index, e, substE)
+      substTo(index, e, substE)
     }
 
     origE match {
-      case Var(v) => if (v == index) substE else Var(v)
+      case BVar(v) => if (v == index) substE else BVar(v)
       case cf@ConfVar(_) => cf
       case gv@GlobalVar(_) => gv
-      case Lambda(e) => Lambda(substN(index + 1, e, shift(1, substE)))
+      case Lambda(e) => Lambda(substTo(index + 1, e, shift(1, substE)))
       case App(e1, e2) => App(subst(e1), subst(e2))
-      case Let(e1, e2) => Let(subst(e1), substN(index + 1, e2, shift(1, substE)))
+      case Let(e1, e2) => Let(subst(e1), substTo(index + 1, e2, shift(1, substE)))
       case f@Fun(_) => f
       case Constr(name, es) => Constr(name, es.map {e => subst(e)})
       case Case(selector, cases) => Case(subst(selector),
-        cases.map {br => (br._1, br._2, substN(index + br._2, br._3, shift(br._2, substE)))})
+        cases.map {br => (br._1, br._2, substTo(index + br._2, br._3, shift(br._2, substE)))})
     }
   }
 
   def subst(origE: Expr, substE: Expr): Expr = {
-    substN(0, origE, substE)
+    substTo(0, origE, substE)
   }
 
   // substitutions of configuration variables
@@ -60,7 +60,7 @@ object Subst {
     }
 
     origE match {
-      case v@Var(_) => v
+      case v@BVar(_) => v
       case ConfVar(v) => if (v == index) substE else ConfVar(v)
       case gv@GlobalVar(_) => gv
       case Lambda(e) => Lambda(substConfSame(e))
