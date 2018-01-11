@@ -9,6 +9,8 @@ object Types {
   case class CaseCtx(cases: List[(String, Int, Expr)]) extends ContextLevel
 
   type Context = List[ContextLevel]
-  type NormalizedExpr = (Expr, Context)
+  type Observable = Expr
+  type RedInCon = (Expr, Context)
+  type NormalizedExpr = Either[Observable, RedInCon]
   type NormalizedProg = (NormalizedExpr, List[(String, Expr)])
 }

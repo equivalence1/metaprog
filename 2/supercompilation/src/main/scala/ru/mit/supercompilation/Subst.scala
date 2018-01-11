@@ -17,7 +17,7 @@ object Subst {
       case gv@GlobalVar(_) => gv
       case Lambda(e) => Lambda(shiftN(from + 1, k, e))
       case App(e1, e2) => App(shift(e1), shift(e2))
-      case Let(e1, e2) => Let(shift(e1), shiftN(from + 1, k, e2))
+      case Let(s, e) => Let(s.map(e => (e._1, shiftN(from, k, e._2))), shiftN(from, k, e))
       case f@Fun(_) => f
       case Constr(name, es) => Constr(name, es.map {e => shift(e)})
       case Case(selector, cases) => Case(shift(selector),
@@ -40,7 +40,7 @@ object Subst {
       case gv@GlobalVar(_) => gv
       case Lambda(e) => Lambda(substTo(index + 1, e, shift(1, substE)))
       case App(e1, e2) => App(subst(e1), subst(e2))
-      case Let(e1, e2) => Let(subst(e1), substTo(index + 1, e2, shift(1, substE)))
+      case Let(s, e) => Let(s.map(e => (e._1, subst(e._2))), subst(e))
       case f@Fun(_) => f
       case Constr(name, es) => Constr(name, es.map {e => subst(e)})
       case Case(selector, cases) => Case(subst(selector),
@@ -65,7 +65,12 @@ object Subst {
       case gv@GlobalVar(_) => gv
       case Lambda(e) => Lambda(substConfSame(e))
       case App(e1, e2) => App(substConfSame(e1), substConfSame(e2))
-      case Let(e1, e2) => Let(substConfSame(e1), substConfSame(e2))
+      case Let(s, e) =>
+        if (s.exists(_._1 == index)) {
+          Let(s.map(e => (e._1, substConfSame(e._2))), e)
+        } else {
+          Let(s.map(e => (e._1, substConfSame(e._2))), substConfSame(e))
+        }
       case f@Fun(_) => f
       case Constr(name, es) => Constr(name, es.map {e => substConfSame(e)})
       case Case(selector, cases) => Case(substConfSame(selector),
