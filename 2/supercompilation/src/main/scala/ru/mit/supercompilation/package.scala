@@ -64,7 +64,12 @@ package object supercompilation {
   }
 
   def flattenApp(a: App): List[Expr] = {
-    null
+    a.e1 match {
+      case e1App@App(_, _) =>
+        flattenApp(e1App) ++ List(a.e2)
+      case _ =>
+        List(a.e1, a.e2)
+    }
   }
 
 }
