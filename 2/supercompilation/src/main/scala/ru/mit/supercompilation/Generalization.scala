@@ -27,11 +27,6 @@ object Generalization {
         val res2 = commonFunctorRule(e12, e22)
         (App(res1._1, res2._1), res1._2 ++ res2._2, res1._3 ++ res2._3)
 
-      case (Let(e11, e12), Let(e21, e22)) =>
-        val res1 = commonFunctorRule(e11, e21)
-        val res2 = commonFunctorRule(e12, e22)
-        (Let(res1._1, res2._1), res1._2 ++ res2._2, res1._3 ++ res2._3)
-
       case (Constr(name1, es1), Constr(name2, es2)) if name1 == name2 =>
         val esGeneralizations = es1.zip(es2).map(e => commonFunctorRule(e._1, e._2))
         val newEs = esGeneralizations.map(_._1)
