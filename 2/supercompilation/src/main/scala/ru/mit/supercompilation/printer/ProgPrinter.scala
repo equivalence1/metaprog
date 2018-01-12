@@ -37,7 +37,7 @@ object ProgPrinter {
         sb.append("let ")
         sb.append(varName)
         sb.append(" = ")
-        print(e1, namesStack) // don't change namesStack here!
+        //print(e1, namesStack) // don't change namesStack here!
         sb.append(" in ")
         print(e2, varName :: namesStack)
 

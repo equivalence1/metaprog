@@ -4,7 +4,7 @@ import ru.mit.supercompilation.Types._
 import ru.mit.supercompilation.parser.{AstTransformer, Parser}
 import ru.mit.supercompilation.printer.ProgPrinter
 import ru.mit.supercompilation.reducer.Reducer
-import ru.mit.supercompilation.reducer.Types.{Context, NormalizedExpr}
+import ru.mit.supercompilation.reducer.Types.{AppCtx, CaseCtx, Context, NormalizedExpr}
 
 package object supercompilation {
 
@@ -54,6 +54,115 @@ package object supercompilation {
 
   def normalize(e: Expr, ctx: Context): NormalizedExpr = {
     Reducer.normalize(e, ctx)
+  }
+
+  def toExpr(nExpr: NormalizedExpr): Expr = {
+    nExpr match {
+      case Left(e) => e
+      case Right((e, ctx)) =>
+        ctx.foldLeft(e) { (e, ctxStep) =>
+          ctxStep match {
+            case AppCtx(e1) => App(e, e1)
+            case CaseCtx(cases) => Case(e, cases)
+          }
+        }
+    }
+  }
+
+  private def containsConf(expr: Types.Expr, id: Int): Boolean = {
+    expr match {
+      case ConfVar(cvId) => id == cvId
+      case Lambda(e) => containsConf(e, id)
+      case App(e1, e2) => containsConf(e1, id) || containsConf(e2, id)
+      case Let(subst, e) => subst.exists(s => containsConf(s._2, id)) || containsConf(e, id)
+      case Constr(_, es) => es.exists(e => containsConf(e, id))
+      case Case(selector, cases) => cases.exists(c => containsConf(c._3, id)) || containsConf(selector, id)
+      case _ => false
+    }
+  }
+
+  def isInstance(expr1: Expr, expr2: Expr): Option[Substitution] = {
+    (expr1, expr2) match {
+      case (BVar(id1), BVar(id2)) =>
+        if (id1 == id2) {
+          Some(Nil)
+        } else {
+          None
+        }
+      case (ConfVar(id1), ConfVar(id2)) =>
+        if (id1 == id2) {
+          Some(Nil)
+        } else {
+          None
+        }
+      case (e@_, cv@ConfVar(id2)) =>
+        if (containsConf(e, id2)) {
+          None
+        } else {
+          Some(List((cv, e)))
+        }
+      case (GlobalVar(name1), GlobalVar(name2)) =>
+        if (name1.equals(name2)) {
+          Some(Nil)
+        } else {
+          None
+        }
+      case (Fun(name1), Fun(name2)) =>
+        if (name1.equals(name2)) {
+          Some(Nil)
+        } else {
+          None
+        }
+      case (Lambda(e1), Lambda(e2)) =>
+        isInstance(e1, e2)
+      case (Let(_, _), Let(_, _)) =>
+        None
+      case (App(e11, e12), App(e21, e22)) =>
+        val instance1 = isInstance(e11, e21)
+        val instance2 = isInstance(e12, e22)
+        (instance1, instance2) match {
+          case (Some(subst1), Some(subst2)) => Some(subst1 ++ subst2)
+          case _ => None
+        }
+      case (Constr(name1, es1), Constr(name2, es2)) =>
+        if (name1.equals(name2)) {
+          val zippedArgs = es1.zip(es2)
+          var res: Substitution = Nil
+          for ((e1, e2) <- zippedArgs) {
+            isInstance(e1, e2) match {
+              case Some(subst) => res = res ++ subst
+              case None => return None
+            }
+          }
+          Some(res)
+        } else {
+          None
+        }
+      case (Case(selector1, cases1), Case(selector2, cases2)) =>
+        val selectorsInstance = isInstance(selector1, selector2)
+        if (selectorsInstance.isEmpty) {
+          return None
+        }
+        val sortedCases1 = cases1.sortBy(_._1)
+        val sortedCases2 = cases2.sortBy(_._1)
+        if (!sortedCases1.map(c => (c._1, c._2)).equals(sortedCases2.map(c => (c._1, c._2)))) {
+          return None
+        }
+        val zippedCases = cases1.map(_._3).zip(cases2.map(_._3))
+        var casesRes: Substitution = Nil
+        for ((e1, e2) <- zippedCases) {
+          isInstance(e1, e2) match {
+            case Some(subst) => casesRes = casesRes ++ subst
+            case None => return None
+          }
+        }
+        Some(selectorsInstance.get ++ casesRes)
+      case _ => None
+    }
+  }
+
+  def isEmbedded(e1: Expr, e2: Expr): Boolean = {
+    false
   }
 
   // TODO: bad that global -- affects testing, need to invalidate each time

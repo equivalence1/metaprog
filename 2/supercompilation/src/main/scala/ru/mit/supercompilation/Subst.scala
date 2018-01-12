@@ -66,7 +66,7 @@ object Subst {
       case Lambda(e) => Lambda(substConfSame(e))
       case App(e1, e2) => App(substConfSame(e1), substConfSame(e2))
       case Let(s, e) =>
-        if (s.exists(_._1 == index)) {
+        if (s.exists(_._1.id == index)) {
           Let(s.map(e => (e._1, substConfSame(e._2))), e)
         } else {
           Let(s.map(e => (e._1, substConfSame(e._2))), substConfSame(e))

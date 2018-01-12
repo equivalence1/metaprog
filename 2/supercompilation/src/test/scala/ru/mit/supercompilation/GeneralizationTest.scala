@@ -58,27 +58,27 @@ class GeneralizationTest extends FunSuite {
     }
   }
 
-  test("Let expr") {
-    nextId = -1
-
-    val e1 = parseExpr("""let x = Nil in let y = Nil in x""")
-    val e2 = parseExpr("""let x = Nil in let y = Nil in y""")
-    val sRes1 = """let x0 = Nil in let x1 = Nil in x0"""
-    val sRes2 = """let x0 = Nil in let x1 = Nil in x1"""
-    val eRes = Let(Constr("Nil", Nil), Let(Constr("Nil", Nil), ConfVar(0)))
-
-    val generalization = Generalization(e1, e2)
-
-    assertResult(eRes) {
-      generalization._1
-    }
-    assertResult(sRes1) {
-      exprToString(subst(generalization._1, generalization._2))
-    }
-    assertResult(sRes2) {
-      exprToString(subst(generalization._1, generalization._3))
-    }
-  }
+//  test("Let expr") {
+//    nextId = -1
+//
+//    val e1 = parseExpr("""let x = Nil in let y = Nil in x""")
+//    val e2 = parseExpr("""let x = Nil in let y = Nil in y""")
+//    val sRes1 = """let x0 = Nil in let x1 = Nil in x0"""
+//    val sRes2 = """let x0 = Nil in let x1 = Nil in x1"""
+//    val eRes = Let(Constr("Nil", Nil), Let(Constr("Nil", Nil), ConfVar(0)))
+//
+//    val generalization = Generalization(e1, e2)
+//
+//    assertResult(eRes) {
+//      generalization._1
+//    }
+//    assertResult(sRes1) {
+//      exprToString(subst(generalization._1, generalization._2))
+//    }
+//    assertResult(sRes2) {
+//      exprToString(subst(generalization._1, generalization._3))
+//    }
+//  }
 
   test("Case expr 1") {
     nextId = -1
