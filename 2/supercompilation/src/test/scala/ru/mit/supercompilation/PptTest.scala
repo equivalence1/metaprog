@@ -1,6 +1,7 @@
 package ru.mit.supercompilation
 
 import org.scalatest.FunSuite
+import ru.mit.supercompilation.printer.ProgPrinter
 
 class PptTest extends FunSuite {
   test("reduce complex") {
@@ -13,6 +14,6 @@ class PptTest extends FunSuite {
     val ppt = new Ppt(prog)
     ppt.build()
     println(ppt.root)
-    println(ppt.residualize()._1)
+    println(ProgPrinter(ppt.residualize()._1))
   }
 }

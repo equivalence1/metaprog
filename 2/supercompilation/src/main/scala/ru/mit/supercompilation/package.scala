@@ -172,6 +172,13 @@ package object supercompilation {
     nextId
   }
 
+  // TODO same
+  private[supercompilation] var nextFunId: Int = -1
+  def nextFreeFunIndex(): Int = {
+    nextFunId += 1
+    nextFunId
+  }
+
   def flattenApp(a: App): List[Expr] = {
     a.e1 match {
       case e1App@App(_, _) =>
