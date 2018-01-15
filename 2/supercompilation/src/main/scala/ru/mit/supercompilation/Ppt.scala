@@ -15,7 +15,7 @@ class Ppt(val prog: Program) {
   val unprocessedLeafs = new mutable.HashSet[PptNode]()
   unprocessedLeafs.add(root)
 
-  private def drive(node: PptNode): Unit = {
+  private[this] def drive(node: PptNode): Unit = {
     if (node.children.nonEmpty || node.link != null) {
       throw new IllegalArgumentException("node should be an unprocessed leaf")
     }
@@ -49,7 +49,7 @@ class Ppt(val prog: Program) {
     node.addChildren(children)
   }
 
-  private def tryInstance(node: PptNode): Boolean = {
+  private[this] def tryInstance(node: PptNode): Boolean = {
     var anc = node.parent
     while (anc != null) {
       isInstance(toExpr(node.expr), toExpr(anc.expr)) match {
@@ -64,14 +64,26 @@ class Ppt(val prog: Program) {
     false
   }
 
-  // TODO remove previous children
-  private def tryGeneralization(node: PptNode): Boolean = {
+  private[this] def removeSubtree(node: PptNode): Unit = {
+    if (node.isLeaf) {
+      node.unfold()
+      unprocessedLeafs.remove(node)
+    } else {
+      node.children.foreach(child => removeSubtree(child))
+      node.children = null
+    }
+  }
+
+  private[this] def tryGeneralization(node: PptNode): Boolean = {
     var anc = node.parent
     while (anc != null) {
       if (isEmbedded(toExpr(anc.expr), toExpr(node.expr))) {
         val generalization = generalize(toExpr(anc.expr), toExpr(node.expr))
         val newExpr = Let(generalization._2, generalization._1)
-        // TODO
+        val newNode = PptNode(anc.parent, normalize(newExpr))
+        removeSubtree(anc)
+        anc.parent.resetChild(anc, newNode)
+        unprocessedLeafs.add(newNode)
         return true
       } else {
         anc = anc.parent
@@ -92,6 +104,7 @@ class Ppt(val prog: Program) {
     }
   }
 
+  // TODO
   private def residualizeLinked(node: Ppt.this.PptNode): Program = {
     null
   }
@@ -131,8 +144,8 @@ class Ppt(val prog: Program) {
     (resExpr, childrenFDefs)
   }
 
-  private def residualize(node: PptNode): Program = {
-    if (node.isLinked) {
+  private[this] def residualize(node: PptNode): Program = {
+    if (node.isFolded) {
       residualizeLinked(node)
     } else {
       residualizeUnlinked(node)
@@ -145,6 +158,7 @@ class Ppt(val prog: Program) {
 
   case class PptNode(parent: PptNode, var expr: NormalizedExpr) {
 
+    // The order for children nodes is important
     var children: List[PptNode] = Nil
     var link: PptLink = _
     val linkedBy = new mutable.HashSet[PptNode]()
@@ -154,12 +168,35 @@ class Ppt(val prog: Program) {
       children.foreach(child => unprocessedLeafs.add(child))
     }
 
+    def resetChild(oldChild: PptNode, newChild: PptNode): Unit = {
+      var newChildren: List[PptNode] = Nil
+      for (child <- children) {
+        if (child == oldChild) {
+          newChildren = newChild :: newChildren
+        } else {
+          newChildren = child :: newChildren
+        }
+      }
+      children = newChildren.reverse
+    }
+
+    def isLeaf: Boolean = {
+      children.nonEmpty
+    }
+
     def fold(link: PptLink): Unit = {
       this.link = link
       link.to.linkedBy.add(this)
     }
 
-    def isLinked: Boolean = {
+    def unfold(): Unit = {
+      if (isFolded) {
+        link.to.linkedBy.remove(this)
+        link = null
+      }
+    }
+
+    def isFolded: Boolean = {
       link != null || linkedBy.nonEmpty
     }
 
