@@ -14,7 +14,7 @@ object Generalization {
   private def commonFunctorRule(e1: Expr, e2: Expr): Generalization = {
     (e1, e2) match {
       case (v@BVar(n), BVar(m)) if n == m => (v, Nil, Nil)
-      case (v@GlobalVar(name1), GlobalVar(name2)) if name1.equals(name2) => (v, Nil, Nil)
+      case (v@GlobalVar(name1), GlobalVar(name2)) if name1 == name2 => (v, Nil, Nil)
       case (v@ConfVar(n), ConfVar(m)) if n == m => (v, Nil, Nil)
       case (f@Fun(name1), Fun(name2)) if name1 == name2 => (f, Nil, Nil)
 

@@ -11,7 +11,10 @@ object ProgPrinter {
   private def print(e: Expr, namesStack: List[String]): Unit = {
     e match {
       case BVar(n) =>
-        sb.append(namesStack(n))
+        if (n >= namesStack.size)
+          sb.append("OOOOPS")
+        else
+          sb.append(namesStack(n))
 
       case ConfVar(id) =>
         sb.append("y" + id)

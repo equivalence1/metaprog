@@ -67,8 +67,8 @@ object Reducer {
         normalize(shift(-1, subst(e1, shift(1, e2))), ctx)
       case Right((Case(Constr(name, es), cases), ctx)) =>
         val _case = cases.find(_._1 == name).get
-        val newExpr: Expr = 0.until(_case._2).foldLeft(_case._3) { (e: Expr, id: Int) =>
-          shift(-1, substTo(id, e, shift(1, es(id))))
+        val newExpr: Expr = 0.until(_case._2).reverse.foldLeft(_case._3) { (e: Expr, id: Int) =>
+          shift(-1, subst(e, shift(1, es(id))))
         }
         normalize(newExpr, ctx)
       case Right((Let(s, e), ctx)) =>

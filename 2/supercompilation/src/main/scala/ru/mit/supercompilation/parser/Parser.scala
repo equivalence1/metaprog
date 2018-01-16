@@ -25,7 +25,7 @@ object Parser extends Parsers {
   }
 
   private def emptyConstructor: Parser[ConstructorNode] = {
-    accept("constructor", { case CONSTRUCTOR(x) => ConstructorNode(x, Nil) })
+    accept("empty constructor", { case CONSTRUCTOR(x) => ConstructorNode(x, Nil) })
   }
 
   private def expr: Parser[ExprAst] = {
@@ -38,7 +38,7 @@ object Parser extends Parsers {
       case ConstructorNode(name, _) ~ args => ConstructorNode(name, args)
     }
 
-    val lambda = LAMBDA ~ rep1(identifier) ~ DOT ~ expr ^^ {
+    val lambda = LAMBDA ~ rep1(identifier) ~ (DOT | ARROW) ~ expr ^^ {
       case _ ~ vars ~ _ ~ e => LambdaNode(vars.map(ident => ident.name), e)
     }
 

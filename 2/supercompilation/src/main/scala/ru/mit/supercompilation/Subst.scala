@@ -63,27 +63,23 @@ object Subst {
       case v@BVar(_) => v
       case ConfVar(v) => if (v == index) substE else ConfVar(v)
       case gv@GlobalVar(_) => gv
-      case Lambda(e) => Lambda(substConfSame(e))
+      case Lambda(e) => Lambda(substConf(index, e, shift(1, substE)))
       case App(e1, e2) => App(substConfSame(e1), substConfSame(e2))
       case Let(s, e) =>
-        if (s.exists(_._1.id == index)) {
-          Let(s.map(e => (e._1, substConfSame(e._2))), e)
-        } else {
+//        if (s.exists(_._1.id == index)) {
+//          Let(s.map(e => (e._1, substConfSame(e._2))), e)
+//        } else {
           Let(s.map(e => (e._1, substConfSame(e._2))), substConfSame(e))
-        }
+//        }
       case f@Fun(_) => f
       case Constr(name, es) => Constr(name, es.map {e => substConfSame(e)})
       case Case(selector, cases) => Case(substConfSame(selector),
-        cases.map {br => (br._1, br._2, substConfSame(br._3))})
+        cases.map {br => (br._1, br._2, substConf(index, br._3, shift(br._2, substE)))})
     }
   }
 
   def subst(origE: Expr, s: Substitution): Expr = {
     s.foldLeft(origE) { (e, s) =>
-        // TODO: do I need it or not?
-//      if (!isClosure(s._2)) {
-//        throw new IllegalArgumentException(s._2 + " is not a valid substitution")
-//      }
       substConf(s._1.id, e, s._2)
     }
   }

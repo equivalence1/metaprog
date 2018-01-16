@@ -14,7 +14,7 @@ object Lexer extends RegexParsers {
   override val whiteSpace: Regex = "[ \t\r\f\n]+".r
 
   def identifier:    Parser[IDENTIFIER]         = "[a-z_][a-zA-Z0-9_]*".r     ^^   {str => IDENTIFIER(str)}
-  def constructor:   Parser[CONSTRUCTOR]        = "[A-Z][a-zA-Z0-9_]*".r      ^^   {str => CONSTRUCTOR(str)}
+  def constructor:   Parser[CONSTRUCTOR]        = "[A-Z0-9][a-zA-Z0-9_]*".r   ^^   {str => CONSTRUCTOR(str)}
   def lambda:        Parser[LAMBDA.type]        = "\\"                        ^^   {_ => LAMBDA}
   def dot:           Parser[DOT.type]           = "."                         ^^   {_ => DOT}
   def openBracket:   Parser[OPEN_BRACKET.type]  = "("                         ^^   {_ => OPEN_BRACKET}
@@ -22,7 +22,7 @@ object Lexer extends RegexParsers {
   def curlyOpen:     Parser[CURLY_OPEN.type]    = "{"                         ^^   {_ => CURLY_OPEN}
   def curlyClose:    Parser[CURLY_CLOSE.type]   = "}"                         ^^   {_ => CURLY_CLOSE}
   def let:           Parser[LET.type]           = "let"                       ^^   {_ => LET}
-  def in:            Parser[IN.type]            = "in"                        ^^   {_ => IN}
+  def in:            Parser[IN.type]            = "in\b"                        ^^   {_ => IN} // TODO
   def _case:         Parser[CASE.type]          = "case"                      ^^   {_ => CASE}
   def of:            Parser[OF.type]            = "of"                        ^^   {_ => OF}
   def arrow:         Parser[ARROW.type]         = "->"                        ^^   {_ => ARROW}

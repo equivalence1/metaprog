@@ -6,16 +6,15 @@ object HomEmbedding {
 
   private[this] def isEmbeddedVar(expr1: Expr, expr2: Expr): Boolean = {
     (expr1, expr2) match {
-      case (BVar(n), BVar(m)) if n == m => true
-      case (ConfVar(n), ConfVar(m)) if n == m => true
-      case (GlobalVar(name1), GlobalVar(name2)) if name1.equals(name2) => true
+      case (_: Var, _: Var) => true
+      case (Fun(name1), Fun(name2)) => name1 == name2
       case _ => false
     }
   }
 
   private[this] def isCoupling(expr1: Expr, expr2: Expr): Boolean = {
     (expr1, expr2) match {
-      case (Constr(name1, es1), Constr(name2, es2)) if name1.equals(name2) =>
+      case (Constr(name1, es1), Constr(name2, es2)) if name1 == name2 =>
         if (es1.size != es2.size) {
           throw new IllegalArgumentException("Same constructor has different number of parameters")
         }
@@ -27,12 +26,13 @@ object HomEmbedding {
         val sortedCases2 = cases2.sortBy(_._1)
         val constructors1 = sortedCases1.map(c => (c._1, c._2))
         val constructors2 = sortedCases2.map(c => (c._1, c._2))
-        if (!constructors1.equals(constructors2)) {
+        if (constructors1 != constructors2) {
           return false
         }
         val zippedExprs = cases1.map(_._3).zip(cases2.map(_._3))
         val notEmbeddedCnt = zippedExprs.count(e => !isEmbedded(e._1, e._2))
         isEmbedded(selector1, selector2) && notEmbeddedCnt == 0
+      case _ => false
     }
   }
 

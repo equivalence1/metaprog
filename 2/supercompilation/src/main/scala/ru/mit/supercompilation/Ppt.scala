@@ -11,7 +11,7 @@ import scala.collection.mutable
   */
 class Ppt(val prog: Program) {
 
-  val root = PptNode(null, normalize(prog._1))
+  var root = PptNode(null, normalize(prog._1))
   val unprocessedLeafs = new mutable.HashSet[PptNode]()
   unprocessedLeafs.add(root)
 
@@ -22,6 +22,8 @@ class Ppt(val prog: Program) {
     if (node.children.nonEmpty || node.link != null) {
       throw new IllegalArgumentException("node should be an unprocessed leaf")
     }
+
+    var isUnfold = false
 
     val children: List[NormalizedExpr] = node.expr match {
       case Left(v) if v.isInstanceOf[Var] =>
@@ -37,6 +39,7 @@ class Ppt(val prog: Program) {
       case Left(Lambda(e)) =>
         List(normalize(e))
       case e@Right((Fun(_), _)) =>
+        isUnfold = true
         List(Reducer.nReduceStep(e, prog._2))
       case e@Right((App(Lambda(_), _), _)) =>
         List(Reducer.nReduceStep(e, prog._2))
@@ -50,21 +53,10 @@ class Ppt(val prog: Program) {
     }
 
     node.addChildren(children)
-  }
-
-  private[this] def tryInstance(node: PptNode): Boolean = {
-    var anc = node.parent
-    while (anc != null) {
-      isInstance(toExpr(node.expr), toExpr(anc.expr)) match {
-        case Some(subst) =>
-          node.expr = normalize(Let(subst, toExpr(anc.expr)))
-          node.addChildren(anc.expr +: subst.map(sub => normalize(sub._2)))
-          node.children.head.fold(PptLink(anc, subst))
-          return true
-        case _ => anc = anc.parent
-      }
-    }
-    false
+//    if (isUnfold) {
+//      println("after unfold")
+//      node.children.head.isAfterUnfold = true
+//    }
   }
 
   private[this] def removeSubtree(node: PptNode): Unit = {
@@ -77,34 +69,86 @@ class Ppt(val prog: Program) {
     }
   }
 
-  private[this] def tryGeneralization(node: PptNode): Boolean = {
+  private[this] def tryFold(anc: PptNode, leaf: PptNode): Boolean = {
+    val leafToAnc = isInstance(toExpr(leaf.expr), toExpr(anc.expr))
+    val ancToLeaf = isInstance(toExpr(anc.expr), toExpr(leaf.expr))
+    (leafToAnc, ancToLeaf) match {
+      case (Some(subst), Some(_)) =>
+//        leaf.expr = normalize(Let(subst, toExpr(anc.expr)))
+//        leaf.addChildren(anc.expr +: subst.map(sub => normalize(sub._2)))
+//        unprocessedLeafs.remove(leaf.children.head)
+//        leaf.children.head.fold(PptLink(anc, subst))
+        leaf.fold(PptLink(anc, subst))
+        true
+      case _ => false
+    }
+  }
+
+  private[this] def doAbstract(node1: PptNode, node2: PptNode): Unit = {
+    val generalization = generalize(toExpr(node1.expr), toExpr(node2.expr))
+    val newExpr = Let(generalization._2, generalization._1)
+    val newNode = PptNode(node1.parent, normalize(newExpr))
+    removeSubtree(node1)
+    if (node1 != root) {
+      node1.parent.resetChild(node1, newNode)
+    } else {
+      root = newNode
+    }
+    unprocessedLeafs.add(newNode)
+  }
+
+  private[this] def tryAbstract(anc: PptNode, leaf: PptNode): Boolean = {
+    isInstance(toExpr(leaf.expr), toExpr(anc.expr)) match {
+      case Some(_) =>
+        doAbstract(leaf, anc)
+        true
+      case _ => false
+    }
+  }
+
+  def computeRelAncs(node: PptNode): List[PptNode] = {
+    var res: List[PptNode] = Nil
     var anc = node.parent
     while (anc != null) {
-      if (isEmbedded(toExpr(anc.expr), toExpr(node.expr))) {
-        val generalization = generalize(toExpr(anc.expr), toExpr(node.expr))
-        val newExpr = Let(generalization._2, generalization._1)
-        val newNode = PptNode(anc.parent, normalize(newExpr))
-        removeSubtree(anc)
-        anc.parent.resetChild(anc, newNode)
-        unprocessedLeafs.add(newNode)
-        return true
-      } else {
-        anc = anc.parent
+      if (isCycleCandidate(anc.expr)) {
+        res = anc :: res
       }
+      anc = anc.parent
     }
-    false
+    res.reverse
+  }
+
+  def find(nodes: List[PptNode], leaf: PptNode): Option[PptNode] = {
+    nodes.find(node => isEmbedded(toExpr(node.expr), toExpr(leaf.expr)) && getExprClass(node.expr) == getExprClass(leaf.expr))
+  }
+
+  def split(node: PptNode, expr: NormalizedExpr): Unit = {
+    drive(node)
   }
 
   def build(): Unit = {
     while (unprocessedLeafs.nonEmpty) {
       val leaf = unprocessedLeafs.iterator.next()
       unprocessedLeafs.remove(leaf)
-      if (!tryInstance(leaf)) {
-        if (!tryGeneralization(leaf)) {
+      val relAncs = computeRelAncs(leaf)
+      val findRes = find(relAncs, leaf)
+      findRes match {
+        case Some(anc) =>
+          if (!tryFold(anc, leaf)) {
+            if (!tryAbstract(anc, leaf)) {
+              generalize(toExpr(anc.expr), toExpr(leaf.expr)) match {
+                case (e, _, _) if !e.isInstanceOf[ConfVar] =>
+                  doAbstract(anc, leaf)
+                case _ => split(leaf, leaf.expr)
+              }
+              //drive(leaf)
+            }
+          }
+        case _ =>
           drive(leaf)
-        }
       }
     }
+//    throw new IllegalStateException()
   }
 
   private[this] def residualizeLinked(node: PptNode): Program = {
@@ -114,29 +158,34 @@ class Ppt(val prog: Program) {
 
       val mainExpr = args.foldLeft[Expr](Fun(fun)) { (prevExpr, id) =>
         node.link.subst.find(s => s._1.id == id) match {
-          case None => App(prevExpr, ConfVar(id))
           case Some(s) => App(prevExpr, s._2)
+          case None => App(prevExpr, ConfVar(id))
         }
       }
       (mainExpr, Nil)
     } else {
-      val fun = "f" + nextFunId
+      val fun = "f" + nextFreeFunIndex()
       val args = node.linkedByConf.toSeq.filter(elem => elem._2 != 0).map(_._1)
-      generatedFunction.+((node, (fun, args)))
+      generatedFunction.+=((node, (fun, args)))
 
       val unlinkedRes = residualizeUnlinked(node)
       val body = unlinkedRes._1
-      var wrappedBody: Expr = body
       var confSubst: List[Expr] = Nil
-      (0 to args.size).foreach { id =>
-        wrappedBody = Lambda(wrappedBody)
+      args.indices.foreach { id =>
         confSubst = BVar(id) :: confSubst
       }
-      confSubst = confSubst.reverse
+      // TODO
+      // confSubst = confSubst.reverse
 
       val s: Substitution = args.map(id => ConfVar(id)).zip(confSubst).toList
 
-      val fdef = (fun, subst(wrappedBody, s))
+      var wrappedBody: Expr = subst(body, s)
+      args.indices.foreach { id =>
+        wrappedBody = Lambda(wrappedBody)
+      }
+
+      // TODO subst inc vars indexes
+      val fdef = (fun, wrappedBody)
       val mainExpr = args.foldLeft[Expr](Fun(fun)) { (prevExpr, id) =>
         App(prevExpr, ConfVar(id))
       }
@@ -170,12 +219,12 @@ class Ppt(val prog: Program) {
       case Right((Case(Constr(_, _), _), _)) =>
         childrenExprs.head
       case Right((Case(_, cases), _)) =>
-        val newCases = cases.zip(childrenExprs).map(c => (c._1._1, c._1._2, c._2))
+        val newCases = cases.zip(childrenExprs.tail).map(c => (c._1._1, c._1._2, c._2))
         Case(childrenExprs.head, newCases)
-      case Right((Let(s, e), _)) =>
+      case Right((Let(s, _), _)) =>
         val newSubst = s.map(_._1).zip(childrenExprs.tail)
         childrenFDefs = childrenFDefs.map(fdef => (fdef._1, subst(fdef._2, newSubst)))
-        subst(e, s)
+        subst(childrenExprs.head, newSubst)
       case _ => throw new IllegalArgumentException("Node expression is not normalized")
     }
 
@@ -194,6 +243,7 @@ class Ppt(val prog: Program) {
     residualize(root)
   }
 
+  // TODO remove public var
   case class PptNode(parent: PptNode, var expr: NormalizedExpr) {
 
     // The order for children nodes is important
@@ -201,6 +251,7 @@ class Ppt(val prog: Program) {
     var link: PptLink = _
     val linkedBy = new mutable.HashSet[PptNode]()
     val linkedByConf: mutable.SortedMap[Int, Int] = mutable.SortedMap.empty[Int, Int]
+    var isAfterUnfold = false
 
     def addChildren(childrenExpr: List[NormalizedExpr]): Unit = {
       children = childrenExpr.map(childExpr => PptNode(this, childExpr))
@@ -220,19 +271,19 @@ class Ppt(val prog: Program) {
     }
 
     def isLeaf: Boolean = {
-      children.nonEmpty
+      children.isEmpty
     }
 
     def fold(link: PptLink): Unit = {
       this.link = link
       link.to.linkedBy.add(this)
-      link.subst.foreach(s => linkedByConf.+((s._1.id, linkedByConf.getOrElse(s._1.id, 0) + 1)))
+      link.subst.foreach(s => link.to.linkedByConf.+=((s._1.id, link.to.linkedByConf.getOrElse(s._1.id, 0) + 1)))
     }
 
     def unfold(): Unit = {
       if (link != null) {
         link.to.linkedBy.remove(this)
-        link.subst.foreach(s => linkedByConf.+((s._1.id, linkedByConf.apply(s._1.id) - 1)))
+        link.subst.foreach(s => link.to.linkedByConf.+=((s._1.id, link.to.linkedByConf.apply(s._1.id) - 1)))
         link = null
       }
     }
