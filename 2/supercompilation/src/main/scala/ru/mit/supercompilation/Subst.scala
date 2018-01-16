@@ -54,16 +54,22 @@ object Subst {
 
   // substitutions of configuration variables
 
-  private def substConf(index: Int, origE: Expr, substE: Expr): Expr = {
+  private def substConf(index: Int, origE: Expr, substE: Expr, lvl: Int): Expr = {
     def substConfSame(e: Expr): Expr = {
-      substConf(index, e, substE)
+      substConf(index, e, substE, lvl)
     }
 
     origE match {
-      case v@BVar(_) => v
+      case BVar(id) =>
+        if (index < 0 && lvl - id == index) {
+          println(s"replacing BVar($id) with $substE")
+          substE
+        } else {
+          BVar(id)
+        }
       case ConfVar(v) => if (v == index) substE else ConfVar(v)
       case gv@GlobalVar(_) => gv
-      case Lambda(e) => Lambda(substConf(index, e, shift(1, substE)))
+      case Lambda(e) => Lambda(substConf(index, e, substE, lvl + 1))//shift(1, substE)))
       case App(e1, e2) => App(substConfSame(e1), substConfSame(e2))
       case Let(s, e) =>
 //        if (s.exists(_._1.id == index)) {
@@ -74,13 +80,14 @@ object Subst {
       case f@Fun(_) => f
       case Constr(name, es) => Constr(name, es.map {e => substConfSame(e)})
       case Case(selector, cases) => Case(substConfSame(selector),
-        cases.map {br => (br._1, br._2, substConf(index, br._3, shift(br._2, substE)))})
+        cases.map {br => (br._1, br._2, substConf(index, br._3, substE, lvl + br._2))}) //shift(br._2, substE)
     }
   }
 
   def subst(origE: Expr, s: Substitution): Expr = {
     s.foldLeft(origE) { (e, s) =>
-      substConf(s._1.id, e, s._2)
+      println(s"substitution to < ${s._1.id}")
+      substConf(s._1.id, e, s._2, -1)
     }
   }
 }

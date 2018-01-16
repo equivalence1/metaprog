@@ -128,7 +128,7 @@ object Reducer {
     expr match {
       case v@BVar(_) => varHelper(v, ctx)
       case cv@ConfVar(_) => varHelper(cv, ctx)
-      case gv@GlobalVar(_) => varHelper(gv, ctx) // TODO
+      case gv@GlobalVar(_) => varHelper(gv, ctx)
       case l@Lambda(_) =>
         ctx match {
           case AppCtx(e1) :: xs => Right((App(l, e1), xs))

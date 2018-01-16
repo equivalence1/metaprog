@@ -46,8 +46,8 @@ object Generalization {
         val genCases = casesG.map(gcase => (gcase._1, gcase._2, gcase._3._1))
 
         val genExpr = Case(genSelector, genCases)
-        val subst1 =  casesG.flatMap(gcase => gcase._3._2)
-        val subst2 =  casesG.flatMap(gcase => gcase._3._3)
+        val subst1 = selectorsG._2 ++ casesG.flatMap(gcase => gcase._3._2)
+        val subst2 = selectorsG._3 ++ casesG.flatMap(gcase => gcase._3._3)
 
         (genExpr, subst1, subst2)
 

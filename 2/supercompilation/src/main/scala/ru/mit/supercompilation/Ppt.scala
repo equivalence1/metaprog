@@ -23,8 +23,6 @@ class Ppt(val prog: Program) {
       throw new IllegalArgumentException("node should be an unprocessed leaf")
     }
 
-    var isUnfold = false
-
     val children: List[NormalizedExpr] = node.expr match {
       case Left(v) if v.isInstanceOf[Var] =>
         Nil
@@ -39,7 +37,6 @@ class Ppt(val prog: Program) {
       case Left(Lambda(e)) =>
         List(normalize(e))
       case e@Right((Fun(_), _)) =>
-        isUnfold = true
         List(Reducer.nReduceStep(e, prog._2))
       case e@Right((App(Lambda(_), _), _)) =>
         List(Reducer.nReduceStep(e, prog._2))
@@ -70,8 +67,10 @@ class Ppt(val prog: Program) {
   }
 
   private[this] def tryFold(anc: PptNode, leaf: PptNode): Boolean = {
-    val leafToAnc = isInstance(toExpr(leaf.expr), toExpr(anc.expr))
-    val ancToLeaf = isInstance(toExpr(anc.expr), toExpr(leaf.expr))
+    val leafExpr = toExpr(leaf.expr)
+    val ancExpr = toExpr(anc.expr)
+    val leafToAnc = isInstance(leafExpr, ancExpr)
+    val ancToLeaf = isInstance(ancExpr, leafExpr)
     (leafToAnc, ancToLeaf) match {
       case (Some(subst), Some(_)) =>
 //        leaf.expr = normalize(Let(subst, toExpr(anc.expr)))
@@ -187,7 +186,11 @@ class Ppt(val prog: Program) {
       // TODO subst inc vars indexes
       val fdef = (fun, wrappedBody)
       val mainExpr = args.foldLeft[Expr](Fun(fun)) { (prevExpr, id) =>
-        App(prevExpr, ConfVar(id))
+        if (id >= 0) {
+          App(prevExpr, ConfVar(id))
+        } else {
+          App(prevExpr, BVar(-id - 1))
+        }
       }
 
       (mainExpr, fdef :: unlinkedRes._2)

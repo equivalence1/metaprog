@@ -13,7 +13,7 @@ class PptTest extends FunSuite {
     val prog = parseProg(sProg)
     val ppt = new Ppt(prog)
     //ppt.build()
-    println(ppt.root)
+    //println(ppt.root)
     //println(ProgPrinter(ppt.residualize()))
   }
 
@@ -26,7 +26,7 @@ class PptTest extends FunSuite {
     val prog = parseProg(sProg)
     val ppt = new Ppt(prog)
     //ppt.build()
-    println(ppt.root)
+    //println(ppt.root)
     //println(ProgPrinter(ppt.residualize()))
   }
 
@@ -39,10 +39,10 @@ class PptTest extends FunSuite {
       """.stripMargin
     val prog = parseProg(sProg)
     val ppt = new Ppt(prog)
-    ppt.build()
-    println(ppt.root)
-    println(ppt.residualize())
-    println(ProgPrinter(ppt.residualize()))
+//    ppt.build()
+//    println(ppt.root)
+//    println(ppt.residualize())
+//    println(ProgPrinter(ppt.residualize()))
   }
 
   test("Example 2") {
@@ -56,10 +56,10 @@ class PptTest extends FunSuite {
       """.stripMargin
     val prog = parseProg(sProg)
     val ppt = new Ppt(prog)
-    ppt.build()
-    println(ppt.root)
-    println(ppt.residualize())
-    println(ProgPrinter(ppt.residualize()))
+//    ppt.build()
+//    println(ppt.root)
+//    println(ppt.residualize())
+//    println(ProgPrinter(ppt.residualize()))
   }
 
   test("Example 3") {
@@ -75,12 +75,23 @@ class PptTest extends FunSuite {
     println(ppt.residualize())
     println(ProgPrinter(ppt.residualize()))
   }
-}
 
-// foo 5 xs
-// ...
-// foo 5 BVar(0)
-// | ...
-// foo 5 BVar(0)
-//
-// f0 = ... BVar(0)
+  test("Example 4") {
+    val sProg =
+      """sum (map (\x -> mult x x) (int Z n))
+        |  where
+        |    int = \l -> \r -> case gt l r of { True -> Nil
+        |                                     | False -> Cons l (int (S l) r) };
+        |    map = \f -> \xs -> case xs of { Nil -> Nil
+        |                                  | Cons x xs -> Cons (f x) (map f xs) };
+        |    sum = \xs -> case xs of { Nil -> Z
+        |                            | Cons x xs -> plus x (sum xs) };
+      """.stripMargin
+    val prog = parseProg(sProg)
+    val ppt = new Ppt(prog)
+    ppt.build()
+    println(ppt.root)
+    println(ppt.residualize())
+    println(ProgPrinter(ppt.residualize()))
+  }
+}
