@@ -50,10 +50,6 @@ class Ppt(val prog: Program) {
     }
 
     node.addChildren(children)
-//    if (isUnfold) {
-//      println("after unfold")
-//      node.children.head.isAfterUnfold = true
-//    }
   }
 
   private[this] def removeSubtree(node: PptNode): Unit = {
@@ -73,10 +69,6 @@ class Ppt(val prog: Program) {
     val ancToLeaf = isInstance(ancExpr, leafExpr)
     (leafToAnc, ancToLeaf) match {
       case (Some(subst), Some(_)) =>
-//        leaf.expr = normalize(Let(subst, toExpr(anc.expr)))
-//        leaf.addChildren(anc.expr +: subst.map(sub => normalize(sub._2)))
-//        unprocessedLeafs.remove(leaf.children.head)
-//        leaf.children.head.fold(PptLink(anc, subst))
         leaf.fold(PptLink(anc, subst))
         true
       case _ => false
@@ -140,14 +132,12 @@ class Ppt(val prog: Program) {
                   doAbstract(anc, leaf)
                 case _ => split(leaf, leaf.expr)
               }
-              //drive(leaf)
             }
           }
         case _ =>
           drive(leaf)
       }
     }
-//    throw new IllegalStateException()
   }
 
   private[this] def residualizeLinked(node: PptNode): Program = {
@@ -173,8 +163,6 @@ class Ppt(val prog: Program) {
       args.indices.foreach { id =>
         confSubst = BVar(id) :: confSubst
       }
-      // TODO
-      // confSubst = confSubst.reverse
 
       val s: Substitution = args.map(id => ConfVar(id)).zip(confSubst).toList
 
@@ -183,7 +171,6 @@ class Ppt(val prog: Program) {
         wrappedBody = Lambda(wrappedBody)
       }
 
-      // TODO subst inc vars indexes
       val fdef = (fun, wrappedBody)
       val mainExpr = args.foldLeft[Expr](Fun(fun)) { (prevExpr, id) =>
         if (id >= 0) {

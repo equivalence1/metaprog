@@ -72,11 +72,7 @@ object Subst {
       case Lambda(e) => Lambda(substConf(index, e, substE, lvl + 1))//shift(1, substE)))
       case App(e1, e2) => App(substConfSame(e1), substConfSame(e2))
       case Let(s, e) =>
-//        if (s.exists(_._1.id == index)) {
-//          Let(s.map(e => (e._1, substConfSame(e._2))), e)
-//        } else {
-          Let(s.map(e => (e._1, substConfSame(e._2))), substConfSame(e))
-//        }
+        Let(s.map(e => (e._1, substConfSame(e._2))), substConfSame(e))
       case f@Fun(_) => f
       case Constr(name, es) => Constr(name, es.map {e => substConfSame(e)})
       case Case(selector, cases) => Case(substConfSame(selector),

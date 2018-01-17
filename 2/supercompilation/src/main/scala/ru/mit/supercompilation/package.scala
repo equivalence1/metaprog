@@ -91,7 +91,6 @@ package object supercompilation {
     }
 
     val preliminaryRes = toExpr(nExpr)
-//    replaceUnbound(preliminaryRes, -1)
     preliminaryRes
   }
 
@@ -113,17 +112,8 @@ package object supercompilation {
       (expr1, expr2) match {
         case (BVar(id1), BVar(id2)) if id1 == id2 && id1 <= lvl =>
           Some(Nil)
-//        case (BVar(id1), BVar(id2)) if id1 == id2 && id1 > lvl =>
-//          Some(List((ConfVar(lvl - id2), BVar(id1))))
         case (e@_, BVar(id2)) if id2 > lvl =>
-//          if (containsConf(e, lvl - id2, lvl)) {
-//            None
-//          } else {
-            println(s"Making subst for BVar, ConfVar id ${lvl - id2}")
-            Some(List((ConfVar(lvl - id2), e)))
-//          }
-//      case (BVar(_), BVar(_)) =>
-//        None
+          Some(List((ConfVar(lvl - id2), e)))
         case (ConfVar(id1), ConfVar(id2)) if id1 == id2 =>
           Some(Nil)
         case (GlobalVar(name1), GlobalVar(name2)) if name1 == name2 =>
@@ -131,11 +121,7 @@ package object supercompilation {
         case (Fun(name1), Fun(name2)) if name1 == name2 =>
           Some(Nil)
         case (e@_, cv@ConfVar(id2)) =>
-//          if (containsConf(e, id2, lvl)) {
-//            None
-//          } else {
-            Some(List((cv, e)))
-//          }
+          Some(List((cv, e)))
         case (Lambda(e1), Lambda(e2)) =>
           isInstance(e1, e2, lvl + 1)
         case (Let(subst1, e1), Let(subst2, e2)) =>
@@ -244,9 +230,6 @@ package object supercompilation {
   private[supercompilation] var nextId: Int = -1
   def nextFreeIndex(): Int = {
     nextId += 1
-    if (nextId == 3) {
-      println(":)")
-    }
     nextId
   }
 

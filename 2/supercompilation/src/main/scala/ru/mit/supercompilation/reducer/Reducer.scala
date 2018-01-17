@@ -6,50 +6,6 @@ import ru.mit.supercompilation.reducer.Types._
 
 object Reducer {
 
-    // normal expressions
-
-//  TODO I'm not sure if I need reduce for simple expressions
-//  def exprReductionStep(expr: Expr, ctx: Context, fdefs: List[(String, Expr)]): NormalizedExpr = {
-//    expr match {
-//      case v@BVar(_) => (v, ctx)
-//      case cv@ConfVar(_) => (cv, ctx)
-//      case gv@GlobalVar(_) => (gv, ctx)
-//      case c@Constr(name, es) =>
-//        ctx match {
-//          case CaseCtx(cases) :: xs =>
-//            val _case = cases.find(_._1 == name).get
-//            val newExpr: Expr = 0.until(_case._2).foldLeft(_case._3) { (e: Expr, id: Int) =>
-//              shift(-1, substTo(id, e, shift(1, es(id))))
-//            }
-//            (newExpr, xs)
-//          case _ => (c, ctx)
-//        }
-//      case Fun(name) => (unfold(name, fdefs), ctx)
-//      case Lambda(e) =>
-//        ctx match {
-//          case (AppCtx(e1)) :: xs => (shift(-1, subst(e, shift(1, e1))), xs)
-//          case Nil => (Lambda(e), ctx)
-//          case _ => throw new IllegalStateException("lambda in bad place")
-//        }
-//      case App(e1, e2) => (e1, AppCtx(e2) :: ctx)
-//      case Case(selector, cases) => (selector, CaseCtx(cases) :: ctx)
-//      case Let(_, _) => throw new UnsupportedOperationException
-//    }
-//  }
-//
-//  def exprReduce(expr: Expr, ctx: Context, fdefs: List[(String, Expr)]): NormalizedExpr = {
-//    var oldExpr: NormalizedExpr = null
-//    var newExpr: NormalizedExpr = (expr, Nil)
-//    while (!newExpr.equals(oldExpr)) {
-//      oldExpr = newExpr
-//      newExpr = exprReductionStep(newExpr._1, newExpr._2, fdefs)
-//    }
-//    newExpr
-//  }
-
-
-  // normalized expressions
-
   /**
     * reduction step:
     *

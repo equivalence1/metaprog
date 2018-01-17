@@ -21,7 +21,7 @@ object ProgPrinter {
 
       case Lambda(le) =>
         val varName = "x" + namesStack.size
-        sb.append("(\\" + varName + " . ")
+        sb.append("(\\" + varName + " -> ")
         print(le, varName :: namesStack)
         sb.append(")")
 
@@ -37,7 +37,6 @@ object ProgPrinter {
         sb.append("let ")
         sb.append(varName)
         sb.append(" = ")
-        //print(e1, namesStack) // don't change namesStack here!
         sb.append(" in ")
         print(e2, varName :: namesStack)
 
@@ -81,23 +80,11 @@ object ProgPrinter {
     }
   }
 
-//  private def restoreExpr(rExpr: ReducedExpr): Expr = {
-//    rExpr match {
-//      case (e, Nil) => e
-//      case (e, LambdaCtx :: ctx) => restoreExpr(Lambda(e), ctx)
-//      case (e, (AppCtx(e1)) :: ctx) => restoreExpr(App(e, e1), ctx)
-//    }
-//  }
-
   def apply(e: Expr): String = {
     sb = new StringBuilder
     print(e, Nil)
     sb.toString()
   }
-
-//  def apply(rExpr: ReducedExpr): String = {
-//    ProgPrinter(restoreExpr(rExpr))
-//  }
 
   def apply(prog: Program): String = {
     funcs = prog._2.map(d => d._1)
