@@ -2,7 +2,7 @@ package ru.mit.supercompilation.printer
 
 import org.scalatest.FunSuite
 import ru.mit.supercompilation.Types.{App, BVar, Lambda}
-import ru.mit.supercompilation.parser.{AstTransformer, Parser}
+import ru.mit.supercompilation.parser.{ExprTranslator, Parser}
 
 class ExprPrinterTest extends FunSuite {
   test("lambda-expr") {
@@ -28,7 +28,7 @@ class ExprPrinterTest extends FunSuite {
           |    h = case x of {Nil -> Z | Cons a b -> S Z};
           |    p = let x = g Z in let y = x in y;
         """.stripMargin
-      ProgPrinter(AstTransformer(Parser(code))).trim()
+      ProgPrinter(ExprTranslator(Parser(code))).trim()
     }
   }
 }

@@ -21,7 +21,6 @@ object Lexer extends RegexParsers {
   def closeBracket:  Parser[CLOSE_BRACKET.type] = ")"                         ^^   {_ => CLOSE_BRACKET}
   def curlyOpen:     Parser[CURLY_OPEN.type]    = "{"                         ^^   {_ => CURLY_OPEN}
   def curlyClose:    Parser[CURLY_CLOSE.type]   = "}"                         ^^   {_ => CURLY_CLOSE}
-  def let:           Parser[LET.type]           = "let(\\b|\\n)".r            ^^   {_ => LET}
   def in:            Parser[IN.type]            = "in(\\b|\\n)".r             ^^   {_ => IN}
   def _case:         Parser[CASE.type]          = "case(\\b|\\n)".r           ^^   {_ => CASE}
   def of:            Parser[OF.type]            = "of(\\b|\\n)".r             ^^   {_ => OF}
@@ -39,7 +38,6 @@ object Lexer extends RegexParsers {
         | closeBracket
         | curlyOpen
         | curlyClose
-        | let
         | in
         | _case
         | of

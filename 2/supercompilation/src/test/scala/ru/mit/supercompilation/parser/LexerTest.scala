@@ -11,12 +11,6 @@ class LexerTest extends FunSuite {
     }
   }
 
-  test("Lexer: let-expr") {
-    assertResult(LET :: IDENTIFIER("x") :: ASSIGNMENT :: CONSTRUCTOR("Nil") :: IN :: IDENTIFIER("x") :: Nil) {
-      Lexer("let x = Nil in x")
-    }
-  }
-
   test("Lexer: case-expr") {
     assertResult(CASE :: IDENTIFIER("x") :: OF :: CURLY_OPEN :: CONSTRUCTOR("Nil") :: ARROW ::
       IDENTIFIER("y") :: ALTERNATION :: CONSTRUCTOR("Cons") :: IDENTIFIER("a") :: IDENTIFIER("b") ::
@@ -26,10 +20,10 @@ class LexerTest extends FunSuite {
   }
 
   test("Lexer: full program") {
-    assertResult(LET :: IDENTIFIER("x") :: ASSIGNMENT :: IDENTIFIER("f") :: CONSTRUCTOR("Z") :: IN :: IDENTIFIER("x") ::
+    assertResult(IDENTIFIER("f") :: CONSTRUCTOR("Z") :: IN :: IDENTIFIER("x") ::
       WHERE :: IDENTIFIER("f") :: ASSIGNMENT :: LAMBDA :: IDENTIFIER("x") :: DOT :: IDENTIFIER("x") :: SEMICOLON :: Nil) {
       Lexer(
-        """let x = f Z in x
+        """f Z
           | where
           |   f = \x . x;
         """.stripMargin)

@@ -55,14 +55,6 @@ class ParserTest extends FunSuite {
     }
   }
 
-  test("let-expr success") {
-    val expected = LambdaNode("x" :: Nil,
-      LetNode("y", AppNode(IdentifierNode("f"), IdentifierNode("x")), IdentifierNode("y")))
-    assertResult(expected) {
-      Parser("\\x . let y = f x in y ")._1
-    }
-  }
-
   test("case-expr success") {
     val expected = CaseNode(IdentifierNode("x"), (CaseConstructorNode("Nil", Nil), IdentifierNode("z")) ::
       (CaseConstructorNode("Cons", "a" :: "b" :: Nil), IdentifierNode("z")) :: Nil)

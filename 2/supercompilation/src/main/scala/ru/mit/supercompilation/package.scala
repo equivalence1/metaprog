@@ -1,7 +1,7 @@
 package ru.mit
 
 import ru.mit.supercompilation.Types._
-import ru.mit.supercompilation.parser.{AstTransformer, Parser}
+import ru.mit.supercompilation.parser.{ExprTranslator, Parser}
 import ru.mit.supercompilation.printer.ProgPrinter
 import ru.mit.supercompilation.reducer.Reducer
 import ru.mit.supercompilation.reducer.Types.{AppCtx, CaseCtx, Context, NormalizedExpr}
@@ -9,7 +9,7 @@ import ru.mit.supercompilation.reducer.Types.{AppCtx, CaseCtx, Context, Normaliz
 package object supercompilation {
 
   def parseProg(code: String): Program = {
-    AstTransformer(Parser(code))
+    ExprTranslator(Parser(code))
   }
 
   def parseExpr(code: String): Expr = {

@@ -13,7 +13,6 @@ package object parser {
   case object DOT extends Token
   case object OPEN_BRACKET extends Token
   case object CLOSE_BRACKET extends Token
-  case object LET extends Token
   case object IN extends Token
   case object CURLY_OPEN extends Token
   case object CURLY_CLOSE extends Token
@@ -35,7 +34,6 @@ package object parser {
   case class ConstructorNode(name: String, args: List[ExprAst]) extends ExprAst
   case class LambdaNode(varNames: List[String], e: ExprAst) extends ExprAst
   case class AppNode(e1: ExprAst, e2: ExprAst) extends ExprAst
-  case class LetNode(varName: String, e1: ExprAst, e2: ExprAst) extends ExprAst
   case class CaseConstructorNode(name: String, args: List[String]) extends ExprAst
   case class CaseNode(selector: ExprAst, cases: List[(CaseConstructorNode, ExprAst)]) extends ExprAst
 
