@@ -1,7 +1,6 @@
 package ru.mit.supercompilation
 
 import ru.mit.supercompilation.Types._
-import ru.mit.supercompilation.reducer.Reducer
 
 import scala.collection.mutable
 

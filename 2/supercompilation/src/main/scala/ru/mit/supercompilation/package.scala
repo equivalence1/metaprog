@@ -3,7 +3,6 @@ package ru.mit
 import ru.mit.supercompilation.Types._
 import ru.mit.supercompilation.parser.{ExprTranslator, Parser}
 import ru.mit.supercompilation.printer.ProgPrinter
-import ru.mit.supercompilation.reducer.Reducer
 
 package object supercompilation {
 

@@ -1,8 +1,7 @@
-package ru.mit.supercompilation.reducer
+package ru.mit.supercompilation
 
 import org.scalatest.FunSuite
 import ru.mit.supercompilation.Types._
-import ru.mit.supercompilation._
 
 class ReducerTest extends FunSuite {
 
