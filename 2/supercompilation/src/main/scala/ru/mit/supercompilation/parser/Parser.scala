@@ -6,10 +6,12 @@ import scala.util.parsing.combinator.Parsers
 import scala.util.parsing.input.{NoPosition, Position, Reader}
 
 class TokenReader(tokens: Seq[Token]) extends Reader[Token] {
+
   override def first: Token = tokens.head
   override def atEnd: Boolean = tokens.isEmpty
   override def pos: Position = NoPosition
   override def rest: Reader[Token] = new TokenReader(tokens.tail)
+
 }
 
 /**
@@ -18,6 +20,7 @@ class TokenReader(tokens: Seq[Token]) extends Reader[Token] {
   * of the transformation into [[ru.mit.supercompilation.Types.Program]]
   */
 object Parser extends Parsers {
+
   override type Elem = Token
 
   private def identifier: Parser[IdentifierNode] = {
@@ -58,18 +61,18 @@ object Parser extends Parsers {
     _case | lambda | constructor | app | base
   }
 
-  private def functionDefinition: Parser[(String, ExprAst)] = {
+  private def functionDefinition: Parser[FDef] = {
     (identifier <~ ASSIGNMENT) ~ (expr <~ SEMICOLON) ^^ {
-      case IdentifierNode(fName) ~ e => (fName, e)
+      case IdentifierNode(fName) ~ e => FDef(fName, e)
     }
   }
 
   private def prog: Parser[ProgramAst] = {
     val onlyExpr = expr ^^ {
-      e => (e, Nil)
+      e => ProgramAst(e, Nil)
     }
     val exprWithWhere = (expr <~ WHERE) ~ rep(functionDefinition) ^^ {
-      case e ~ fDefs => (e, fDefs)
+      case e ~ fDefs => ProgramAst(e, fDefs)
     }
 
     phrase(exprWithWhere | onlyExpr)
@@ -83,6 +86,7 @@ object Parser extends Parsers {
       case Success(result, _) => result
     }
   }
+
 }
 
 /**
@@ -130,8 +134,9 @@ object ExprTranslator {
   }
 
   def apply(ast: ProgramAst): Program = {
-    functionsList = ast._2.map(definition => definition._1)
-    (translateToExpr(ast._1, Nil), ast._2.map(definition => (definition._1, translateToExpr(definition._2, Nil))))
+    functionsList = ast.fDefs.map(definition => definition.fName)
+    val translatedFdefs = ast.fDefs.map(definition => (definition.fName, translateToExpr(definition.exprAst, Nil)))
+    (translateToExpr(ast.mainExpr, Nil), translatedFdefs)
   }
 
 }

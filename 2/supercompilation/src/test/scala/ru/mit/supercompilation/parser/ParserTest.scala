@@ -6,7 +6,7 @@ class ParserTest extends FunSuite {
   test("lambda-expr success 1") {
     val expectedAst = LambdaNode("x" :: Nil, IdentifierNode("x"))
     assertResult(expectedAst) {
-      Parser("(\\x . x)")._1
+      Parser("(\\x . x)").mainExpr
     }
   }
 
@@ -19,14 +19,14 @@ class ParserTest extends FunSuite {
         IdentifierNode("x"))),
       LambdaNode("x" :: Nil, IdentifierNode("x")))
     assertResult(expectedAst) {
-      Parser("(\\x . (\\y . y x) x) (\\x . x)")._1
+      Parser("(\\x . (\\y . y x) x) (\\x . x)").mainExpr
     }
   }
 
   test("application without braces success") {
     val expectedAst = AppNode(AppNode(IdentifierNode("x"), IdentifierNode("y")), IdentifierNode("z"))
     assertResult(expectedAst) {
-      Parser("x y z")._1
+      Parser("x y z").mainExpr
     }
   }
 
@@ -51,7 +51,7 @@ class ParserTest extends FunSuite {
   test("constructor success") {
     val expected = ConstructorNode("C", List(IdentifierNode("a"), IdentifierNode("b")))
     assertResult(expected) {
-      Parser("C a b")._1
+      Parser("C a b").mainExpr
     }
   }
 
@@ -59,7 +59,7 @@ class ParserTest extends FunSuite {
     val expected = CaseNode(IdentifierNode("x"), (CaseConstructorNode("Nil", Nil), IdentifierNode("z")) ::
       (CaseConstructorNode("Cons", "a" :: "b" :: Nil), IdentifierNode("z")) :: Nil)
     assertResult(expected) {
-      Parser("case x of {Nil -> z | Cons a b -> z}")._1
+      Parser("case x of {Nil -> z | Cons a b -> z}").mainExpr
     }
   }
 

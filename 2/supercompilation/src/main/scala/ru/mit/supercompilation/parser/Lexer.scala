@@ -10,6 +10,7 @@ import scala.util.parsing.combinator.RegexParsers
   * This lexer splits input string into List[Token]
   */
 object Lexer extends RegexParsers {
+
   override def skipWhitespace = true
   override val whiteSpace: Regex = "[ \t\r\f\n]+".r
 
@@ -57,6 +58,7 @@ object Lexer extends RegexParsers {
       case Success(result, _) => result
     }
   }
+
 }
 
 
