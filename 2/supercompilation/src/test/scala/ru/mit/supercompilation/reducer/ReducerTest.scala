@@ -29,12 +29,12 @@ class ReducerTest extends FunSuite {
     }
   }
 
-  test("normalization case") {
-    val sExpr = """case f of {Nil -> Nil}"""
-    assertResult((Case(GlobalVar("f"), List(("Nil", 0, Constr("Nil", Nil)))), Nil)) {
-      normalize(parseExpr(sExpr))
-    }
-  }
+//  test("normalization case") {
+//    val sExpr = """case f of {Nil -> Nil}"""
+//    assertResult((Case(GlobalVar("f"), List(("Nil", 0, Constr("Nil", Nil)))), Nil)) {
+//      normalize(parseExpr(sExpr))
+//    }
+//  }
 
   // reduce tests
 

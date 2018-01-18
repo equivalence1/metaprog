@@ -6,27 +6,27 @@ object Subst {
 
   // substitutions into bounded variable (like when applying a lambda to an expression)
 
-  private def shiftN(from: Int, k: Int, expr: Expr): Expr = {
+  private def shiftFrom(from: Int, k: Int, expr: Expr): Expr = {
     def shift(e: Expr): Expr = {
-      shiftN(from, k, e)
+      shiftFrom(from, k, e)
     }
 
     expr match {
       case BVar(v) => if (v >= from) BVar(v + k) else BVar(v)
       case cf@ConfVar(_) => cf
       case gv@GlobalVar(_) => gv
-      case Lambda(e) => Lambda(shiftN(from + 1, k, e))
+      case Lambda(e) => Lambda(shiftFrom(from + 1, k, e))
       case App(e1, e2) => App(shift(e1), shift(e2))
-      case Let(s, e) => Let(s.map(e => (e._1, shiftN(from, k, e._2))), shiftN(from, k, e))
+      case Let(s, e) => Let(s.map(e => (e._1, shiftFrom(from, k, e._2))), shiftFrom(from, k, e))
       case f@Fun(_) => f
       case Constr(name, es) => Constr(name, es.map {e => shift(e)})
       case Case(selector, cases) => Case(shift(selector),
-        cases.map {br => (br._1, br._2, shiftN(from + br._2, k, br._3))})
+        cases.map {br => CaseBranch(br.constrName, br.nrArgs, shiftFrom(from + br.nrArgs, k, br.expr))})
     }
   }
 
   def shift(k: Int, expr: Expr): Expr = {
-    shiftN(0, k, expr)
+    shiftFrom(0, k, expr)
   }
 
   def substTo(index: Int, origE: Expr, substE: Expr): Expr = {
@@ -44,7 +44,7 @@ object Subst {
       case f@Fun(_) => f
       case Constr(name, es) => Constr(name, es.map {e => subst(e)})
       case Case(selector, cases) => Case(subst(selector),
-        cases.map {br => (br._1, br._2, substTo(index + br._2, br._3, shift(br._2, substE)))})
+        cases.map {br => CaseBranch(br.constrName, br.nrArgs, substTo(index + br.nrArgs, br.expr, shift(br.nrArgs, substE)))})
     }
   }
 
@@ -62,27 +62,25 @@ object Subst {
     origE match {
       case BVar(id) =>
         if (index < 0 && lvl - id == index) {
-          println(s"replacing BVar($id) with $substE")
           substE
         } else {
           BVar(id)
         }
       case ConfVar(v) => if (v == index) substE else ConfVar(v)
       case gv@GlobalVar(_) => gv
-      case Lambda(e) => Lambda(substConf(index, e, substE, lvl + 1))//shift(1, substE)))
+      case Lambda(e) => Lambda(substConf(index, e, substE, lvl + 1))
       case App(e1, e2) => App(substConfSame(e1), substConfSame(e2))
       case Let(s, e) =>
         Let(s.map(e => (e._1, substConfSame(e._2))), substConfSame(e))
       case f@Fun(_) => f
       case Constr(name, es) => Constr(name, es.map {e => substConfSame(e)})
       case Case(selector, cases) => Case(substConfSame(selector),
-        cases.map {br => (br._1, br._2, substConf(index, br._3, substE, lvl + br._2))}) //shift(br._2, substE)
+        cases.map {br => CaseBranch(br.constrName, br.nrArgs, substConf(index, br.expr, substE, lvl + br.nrArgs))})
     }
   }
 
   def subst(origE: Expr, s: Substitution): Expr = {
     s.foldLeft(origE) { (e, s) =>
-      println(s"substitution to < ${s._1.id}")
       substConf(s._1.id, e, s._2, -1)
     }
   }

@@ -2,7 +2,6 @@ package ru.mit.supercompilation
 
 import ru.mit.supercompilation.Types._
 import ru.mit.supercompilation.reducer.Reducer
-import ru.mit.supercompilation.reducer.Types.NormalizedExpr
 
 import scala.collection.mutable
 
@@ -11,7 +10,7 @@ import scala.collection.mutable
   */
 class Ppt(val prog: Program) {
 
-  var root = PptNode(null, normalize(prog._1))
+  var root = PptNode(null, normalize(prog.mainExpr))
   val unprocessedLeafs = new mutable.HashSet[PptNode]()
   unprocessedLeafs.add(root)
 
@@ -37,13 +36,13 @@ class Ppt(val prog: Program) {
       case Left(Lambda(e)) =>
         List(normalize(e))
       case e@Right((Fun(_), _)) =>
-        List(Reducer.nReduceStep(e, prog._2))
+        List(Reducer.nReduceStep(e, prog.fdefs))
       case e@Right((App(Lambda(_), _), _)) =>
-        List(Reducer.nReduceStep(e, prog._2))
+        List(Reducer.nReduceStep(e, prog.fdefs))
       case e@Right((Case(Constr(_, _), _), _)) =>
-        List(Reducer.nReduceStep(e, prog._2))
+        List(Reducer.nReduceStep(e, prog.fdefs))
       case Right((Case(selector, cases), ctx)) =>
-        List(normalize(selector)) ++ cases.map(c => normalize(c._3, ctx))
+        List(normalize(selector)) ++ cases.map(c => normalize(c.expr, ctx))
       case Right((Let(subst, e2), _)) =>
          List(normalize(e2)) ++ subst.map(e => normalize(e._2))
       case _ => throw new IllegalArgumentException("Node expression is not normalized")
@@ -77,7 +76,7 @@ class Ppt(val prog: Program) {
 
   private[this] def doAbstract(node1: PptNode, node2: PptNode): Unit = {
     val generalization = generalize(toExpr(node1.expr), toExpr(node2.expr))
-    val newExpr = Let(generalization._2, generalization._1)
+    val newExpr = Let(generalization.subst1, generalization.gExpr)
     val newNode = PptNode(node1.parent, normalize(newExpr))
     removeSubtree(node1)
     if (node1 != root) {
@@ -128,7 +127,7 @@ class Ppt(val prog: Program) {
           if (!tryFold(anc, leaf)) {
             if (!tryAbstract(anc, leaf)) {
               generalize(toExpr(anc.expr), toExpr(leaf.expr)) match {
-                case (e, _, _) if !e.isInstanceOf[ConfVar] =>
+                case Generalization(e, _, _) if !e.isInstanceOf[ConfVar] =>
                   doAbstract(anc, leaf)
                 case _ => split(leaf, leaf.expr)
               }
@@ -151,14 +150,14 @@ class Ppt(val prog: Program) {
           case None => App(prevExpr, ConfVar(id))
         }
       }
-      (mainExpr, Nil)
+      Program(mainExpr, Nil)
     } else {
       val fun = "f" + nextFreeFunIndex()
       val args = node.linkedByConf.toSeq.filter(elem => elem._2 != 0).map(_._1)
       generatedFunction.+=((node, (fun, args)))
 
       val unlinkedRes = residualizeUnlinked(node)
-      val body = unlinkedRes._1
+      val body = unlinkedRes.mainExpr
       var confSubst: List[Expr] = Nil
       args.indices.foreach { id =>
         confSubst = BVar(id) :: confSubst
@@ -167,11 +166,11 @@ class Ppt(val prog: Program) {
       val s: Substitution = args.map(id => ConfVar(id)).zip(confSubst).toList
 
       var wrappedBody: Expr = subst(body, s)
-      args.indices.foreach { id =>
+      args.indices.foreach { _ =>
         wrappedBody = Lambda(wrappedBody)
       }
 
-      val fdef = (fun, wrappedBody)
+      val fdef = FDef(fun, wrappedBody)
       val mainExpr = args.foldLeft[Expr](Fun(fun)) { (prevExpr, id) =>
         if (id >= 0) {
           App(prevExpr, ConfVar(id))
@@ -180,14 +179,14 @@ class Ppt(val prog: Program) {
         }
       }
 
-      (mainExpr, fdef :: unlinkedRes._2)
+      Program(mainExpr, fdef :: unlinkedRes.fdefs)
     }
   }
 
   private[this] def residualizeUnlinked(node: PptNode): Program = {
     val childrenRes = node.children.map(child => residualize(child))
-    val childrenExprs = childrenRes.map(_._1)
-    var childrenFDefs = childrenRes.flatMap(_._2)
+    val childrenExprs = childrenRes.map(_.mainExpr)
+    var childrenFDefs = childrenRes.flatMap(_.fdefs)
 
     val resExpr: Expr = node.expr match {
       case Left(v) if v.isInstanceOf[Var] =>
@@ -209,16 +208,16 @@ class Ppt(val prog: Program) {
       case Right((Case(Constr(_, _), _), _)) =>
         childrenExprs.head
       case Right((Case(_, cases), _)) =>
-        val newCases = cases.zip(childrenExprs.tail).map(c => (c._1._1, c._1._2, c._2))
+        val newCases = cases.zip(childrenExprs.tail).map(c => CaseBranch(c._1.constrName, c._1.nrArgs, c._2))
         Case(childrenExprs.head, newCases)
       case Right((Let(s, _), _)) =>
         val newSubst = s.map(_._1).zip(childrenExprs.tail)
-        childrenFDefs = childrenFDefs.map(fdef => (fdef._1, subst(fdef._2, newSubst)))
+        childrenFDefs = childrenFDefs.map(fdef => FDef(fdef.fName, subst(fdef.body, newSubst)))
         subst(childrenExprs.head, newSubst)
       case _ => throw new IllegalArgumentException("Node expression is not normalized")
     }
 
-    (resExpr, childrenFDefs)
+    Program(resExpr, childrenFDefs)
   }
 
   private[this] def residualize(node: PptNode): Program = {

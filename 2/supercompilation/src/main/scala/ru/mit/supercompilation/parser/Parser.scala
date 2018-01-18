@@ -61,9 +61,9 @@ object Parser extends Parsers {
     _case | lambda | constructor | app | base
   }
 
-  private def functionDefinition: Parser[FDef] = {
+  private def functionDefinition: Parser[AstFDef] = {
     (identifier <~ ASSIGNMENT) ~ (expr <~ SEMICOLON) ^^ {
-      case IdentifierNode(fName) ~ e => FDef(fName, e)
+      case IdentifierNode(fName) ~ e => AstFDef(fName, e)
     }
   }
 
@@ -121,11 +121,11 @@ object ExprTranslator {
 
       case CaseNode(selector, cases) =>
         val newCases =
-          cases.map { a =>
-            val c = a._1
-            val e = a._2
-            val newScope = c.args.reverse ++ scopeVariablesStack
-            (c.name, c.args.size, translateToExpr(e, newScope))
+          cases.map { branch =>
+            val constr = branch._1
+            val e = branch._2
+            val newScope = constr.args.reverse ++ scopeVariablesStack
+            CaseBranch(constr.name, constr.args.size, translateToExpr(e, newScope))
           }
         Case(translateToExpr(selector, scopeVariablesStack), newCases)
 
@@ -135,8 +135,8 @@ object ExprTranslator {
 
   def apply(ast: ProgramAst): Program = {
     functionsList = ast.fDefs.map(definition => definition.fName)
-    val translatedFdefs = ast.fDefs.map(definition => (definition.fName, translateToExpr(definition.exprAst, Nil)))
-    (translateToExpr(ast.mainExpr, Nil), translatedFdefs)
+    val translatedFdefs = ast.fDefs.map(definition => FDef(definition.fName, translateToExpr(definition.body, Nil)))
+    Program(translateToExpr(ast.mainExpr, Nil), translatedFdefs)
   }
 
 }

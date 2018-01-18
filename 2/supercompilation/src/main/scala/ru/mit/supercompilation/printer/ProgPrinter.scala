@@ -2,6 +2,11 @@ package ru.mit.supercompilation.printer
 
 import ru.mit.supercompilation.Types._
 
+/**
+  * Well, it's not actually a printer.
+  * This object only transforms [[Expr]] into [[String]],
+  * but I didn't find more appropriate name
+  */
 object ProgPrinter {
 
   var sb: StringBuilder = _
@@ -32,13 +37,8 @@ object ProgPrinter {
         print(e2, namesStack)
         sb.append(")")
 
-      case Let(e1, e2) =>
-        val varName = "x" + namesStack.size
-        sb.append("let ")
-        sb.append(varName)
-        sb.append(" = ")
-        sb.append(" in ")
-        print(e2, varName :: namesStack)
+      case Let(_, _) =>
+        throw new IllegalArgumentException("Let expression is inadmissible in an output expression")
 
       case Fun(name) =>
         sb.append(name)
@@ -58,7 +58,7 @@ object ProgPrinter {
         print(selector, namesStack)
         sb.append(" of {")
         var first = true
-        for ((constrName, varsNr, caseExpr) <- cases) {
+        for (CaseBranch(constrName, varsNr, caseExpr) <- cases) {
           if (!first) {
             sb.append(" | ")
           }
@@ -87,13 +87,13 @@ object ProgPrinter {
   }
 
   def apply(prog: Program): String = {
-    funcs = prog._2.map(d => d._1)
+    funcs = prog.fdefs.map(d => d.fName)
 
     val result: StringBuilder = new StringBuilder
-    result.append(apply(prog._1))
+    result.append(apply(prog.mainExpr))
     if (funcs.nonEmpty) {
       result.append("\n  where")
-      for ((funName, funExpr) <- prog._2) {
+      for (FDef(funName, funExpr) <- prog.fdefs) {
         result.append("\n    ")
         result.append(funName)
         result.append(" = ")

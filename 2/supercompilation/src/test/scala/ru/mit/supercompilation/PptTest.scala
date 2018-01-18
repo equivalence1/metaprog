@@ -12,9 +12,8 @@ class PptTest extends FunSuite {
       """.stripMargin
     val prog = parseProg(sProg)
     val ppt = new Ppt(prog)
-    //ppt.build()
-    //println(ppt.root)
-    //println(ProgPrinter(ppt.residualize()))
+    ppt.build()
+    println(ProgPrinter(ppt.residualize()))
   }
 
   test("snd") {
@@ -25,12 +24,11 @@ class PptTest extends FunSuite {
       """.stripMargin
     val prog = parseProg(sProg)
     val ppt = new Ppt(prog)
-    //ppt.build()
-    //println(ppt.root)
-    //println(ProgPrinter(ppt.residualize()))
+    ppt.build()
+    println(ProgPrinter(ppt.residualize()))
   }
 
-    test("bla-bla-bla") {
+    test("Example 1") {
     val sProg =
       """foo 1 xs
         |    where
@@ -39,10 +37,8 @@ class PptTest extends FunSuite {
       """.stripMargin
     val prog = parseProg(sProg)
     val ppt = new Ppt(prog)
-//    ppt.build()
-//    println(ppt.root)
-//    println(ppt.residualize())
-//    println(ProgPrinter(ppt.residualize()))
+    ppt.build()
+    println(ProgPrinter(ppt.residualize()))
   }
 
   test("Example 2") {
@@ -56,10 +52,8 @@ class PptTest extends FunSuite {
       """.stripMargin
     val prog = parseProg(sProg)
     val ppt = new Ppt(prog)
-//    ppt.build()
-//    println(ppt.root)
-//    println(ppt.residualize())
-//    println(ProgPrinter(ppt.residualize()))
+    ppt.build()
+    println(ProgPrinter(ppt.residualize()))
   }
 
   test("Example 3") {
@@ -71,8 +65,6 @@ class PptTest extends FunSuite {
     val prog = parseProg(sProg)
     val ppt = new Ppt(prog)
     ppt.build()
-    println(ppt.root)
-    println(ppt.residualize())
     println(ProgPrinter(ppt.residualize()))
   }
 
@@ -90,8 +82,6 @@ class PptTest extends FunSuite {
     val prog = parseProg(sProg)
     val ppt = new Ppt(prog)
     ppt.build()
-    println(ppt.root)
-    println(ppt.residualize())
     println(ProgPrinter(ppt.residualize()))
   }
 
@@ -109,8 +99,6 @@ class PptTest extends FunSuite {
     val prog = parseProg(sProg)
     val ppt = new Ppt(prog)
     ppt.build()
-    println(ppt.root)
-    println(ppt.residualize())
     println(ProgPrinter(ppt.residualize()))
   }
 
@@ -126,8 +114,6 @@ class PptTest extends FunSuite {
     val prog = parseProg(sProg)
     val ppt = new Ppt(prog)
     ppt.build()
-    println(ppt.root)
-    println(ppt.residualize())
     println(ProgPrinter(ppt.residualize()))
   }
 
@@ -144,8 +130,6 @@ class PptTest extends FunSuite {
     val prog = parseProg(sProg)
     val ppt = new Ppt(prog)
     ppt.build()
-    println(ppt.root)
-    println(ppt.residualize())
     println(ProgPrinter(ppt.residualize()))
   }
 }

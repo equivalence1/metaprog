@@ -1,11 +1,15 @@
 package ru.mit.supercompilation
 
+import scala.language.implicitConversions
+
 /**
   * Common types for all stages of supercompilation
   */
 object Types {
 
   // Expressions {{{
+
+  case class CaseBranch(constrName: String, nrArgs: Int, expr: Expr)
 
   sealed trait Expr
   sealed trait Var extends Expr
@@ -23,12 +27,31 @@ object Types {
   case class Let(subst: Substitution, e2: Expr) extends Expr
   case class Fun(name: String) extends Expr
   case class Constr(name: String, es: List[Expr]) extends Expr
-  case class Case(selector: Expr, cases: List[(String, Int, Expr)]) extends Expr
+  case class Case(selector: Expr, cases: List[CaseBranch]) extends Expr
+
+  case class FDef(fName: String, body: Expr)
+  case class Program(mainExpr: Expr, fdefs: List[FDef])
 
   // }}}
 
-  type FunDef = (String, Expr)
-  type Program = (Expr, List[FunDef])
+  // Normalized Expressions {{{
+
+  sealed trait ContextLevel
+  case class AppCtx(e: Expr) extends ContextLevel
+  case class CaseCtx(cases: List[CaseBranch]) extends ContextLevel
+
+  type Context = List[ContextLevel]
+  type Observable = Expr
+  type RedexInContext = (Expr, Context)
+  type NormalizedExpr = Either[Observable, RedexInContext]
+  case class NormalizedProg(NormalizedExpr: NormalizedExpr, fdefs: List[FDef])
+
+  // }}}
+
+  case class Generalization(gExpr: Expr, subst1: Substitution, subst2: Substitution)
+  implicit def tuple2Generalization(tuple3: (Expr, Substitution, Substitution)): Generalization =
+    Generalization(tuple3._1, tuple3._2, tuple3._3)
 
   type Substitution = List[(ConfVar, Expr)]
+
 }

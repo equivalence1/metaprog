@@ -4,7 +4,6 @@ import ru.mit.supercompilation.Types._
 import ru.mit.supercompilation.parser.{ExprTranslator, Parser}
 import ru.mit.supercompilation.printer.ProgPrinter
 import ru.mit.supercompilation.reducer.Reducer
-import ru.mit.supercompilation.reducer.Types.{AppCtx, CaseCtx, Context, NormalizedExpr}
 
 package object supercompilation {
 
@@ -13,7 +12,7 @@ package object supercompilation {
   }
 
   def parseExpr(code: String): Expr = {
-    parseProg(code)._1
+    parseProg(code).mainExpr
   }
 
   def progToString(prog: Program): String = {
@@ -21,7 +20,7 @@ package object supercompilation {
   }
 
   def exprToString(expr: Expr): String = {
-    progToString((expr, Nil))
+    progToString(Program(expr, Nil))
   }
 
   def substTo(index: Int, origE: Expr, substE: Expr): Expr = {
@@ -40,12 +39,12 @@ package object supercompilation {
     Subst.shift(k, e)
   }
 
-  def unfold(fName: String, fdefs: List[(String, Expr)]): Expr = {
-    fdefs.find(fDef => fDef._1 == fName).get._2
+  def unfold(fName: String, fdefs: List[FDef]): Expr = {
+    fdefs.find(fDef => fDef.fName == fName).get.body
   }
 
-  def generalize(e1: Expr, e2: Expr): Generalization.Generalization = {
-    Generalization(e1, e2)
+  def generalize(e1: Expr, e2: Expr): Generalization = {
+    Generalizer(e1, e2)
   }
 
   def normalize(e: Expr): NormalizedExpr = {
@@ -71,7 +70,7 @@ package object supercompilation {
       case Let(s, e) => Let(s, replaceUnbound(e, lvl)) // TODO should i do something with s?
       case c@Constr(_, _) => c
       case Case(selector, cases) =>
-        val newCases = cases.map(c => (c._1, c._2, replaceUnbound(c._3, lvl + c._2)))
+        val newCases = cases.map(c => CaseBranch(c.constrName, c.nrArgs, replaceUnbound(c.expr, lvl + c.nrArgs)))
         Case(replaceUnbound(selector, lvl), newCases)
     }
   }
@@ -94,19 +93,6 @@ package object supercompilation {
     preliminaryRes
   }
 
-  private def containsConf(expr: Types.Expr, id: Int, lvl: Int): Boolean = {
-    expr match {
-      case BVar(bid) if id < 0 => lvl - bid == id
-      case ConfVar(cvId) if id >= 0 => id == cvId
-      case Lambda(e) => containsConf(e, id, lvl + 1)
-      case App(e1, e2) => containsConf(e1, id, lvl) || containsConf(e2, id, lvl)
-      case Let(subst, e) => subst.exists(s => containsConf(s._2, id, lvl)) || containsConf(e, id, lvl)
-      case Constr(_, es) => es.exists(e => containsConf(e, id, lvl))
-      case Case(selector, cases) => cases.exists(c => containsConf(c._3, id, lvl)) || containsConf(selector, id, lvl)
-      case _ => false
-    }
-  }
-
   def isInstance(expr1: Expr, expr2: Expr): Option[Substitution] = {
     def isInstance(expr1: Expr, expr2: Expr, lvl: Int): Option[Substitution] = {
       (expr1, expr2) match {
@@ -120,7 +106,7 @@ package object supercompilation {
           Some(Nil)
         case (Fun(name1), Fun(name2)) if name1 == name2 =>
           Some(Nil)
-        case (e@_, cv@ConfVar(id2)) =>
+        case (e@_, cv@ConfVar(_)) =>
           Some(List((cv, e)))
         case (Lambda(e1), Lambda(e2)) =>
           isInstance(e1, e2, lvl + 1)
@@ -154,12 +140,12 @@ package object supercompilation {
           if (selectorsInstance.isEmpty) {
             return None
           }
-          val sortedCases1 = cases1.sortBy(_._1)
-          val sortedCases2 = cases2.sortBy(_._1)
-          if (sortedCases1.map(c => (c._1, c._2)) != sortedCases2.map(c => (c._1, c._2))) {
+          val sortedCases1 = cases1.sortBy(_.constrName)
+          val sortedCases2 = cases2.sortBy(_.constrName)
+          if (sortedCases1.map(c => (c.constrName, c.nrArgs)) != sortedCases2.map(c => (c.constrName, c.nrArgs))) {
             return None
           }
-          val zippedCases = sortedCases1.map(c => (c._2, c._3)).zip(sortedCases2.map(_._3))
+          val zippedCases = sortedCases1.map(c => (c.nrArgs, c.expr)).zip(sortedCases2.map(_.expr))
           var casesRes: Substitution = Nil
           for (((nrArgs, e1), e2) <- zippedCases) {
             isInstance(e1, e2, lvl + nrArgs) match {

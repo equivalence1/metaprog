@@ -2,7 +2,6 @@ package ru.mit.supercompilation.reducer
 
 import ru.mit.supercompilation.Types._
 import ru.mit.supercompilation._
-import ru.mit.supercompilation.reducer.Types._
 
 object Reducer {
 
@@ -15,15 +14,15 @@ object Reducer {
     * con[(\v -> e0) e1]                     -> con[e0{v := e1}]
     * con[case Cj {e'k} of {Ci {vik} -> ei}] -> con[ej{{vjk} := {e'k}}]
     */
-  def nReduceStep(expr: NormalizedExpr, fdefs: List[(String, Expr)]): NormalizedExpr = {
+  def nReduceStep(expr: NormalizedExpr, fdefs: List[FDef]): NormalizedExpr = {
     expr match {
       case Right((Fun(name), ctx)) =>
         normalize(unfold(name, fdefs), ctx)
       case Right((App(Lambda(e1), e2), ctx)) =>
         normalize(shift(-1, subst(e1, shift(1, e2))), ctx)
       case Right((Case(Constr(name, es), cases), ctx)) =>
-        val _case = cases.find(_._1 == name).get
-        val newExpr: Expr = 0.until(_case._2).reverse.foldLeft(_case._3) { (e: Expr, id: Int) =>
+        val _case = cases.find(_.constrName == name).get
+        val newExpr: Expr = 0.until(_case.nrArgs).reverse.foldLeft(_case.expr) { (e, id) =>
           shift(-1, subst(e, shift(1, es(id))))
         }
         normalize(newExpr, ctx)
@@ -35,7 +34,7 @@ object Reducer {
 
   // This function is mostly for testing purposes right now.
   // But who knows, it might be useful later
-  def nReduce(nExpr: NormalizedExpr, fdefs: List[(String, Expr)]): NormalizedExpr = {
+  def nReduce(nExpr: NormalizedExpr, fdefs: List[FDef]): NormalizedExpr = {
     var oldResult: NormalizedExpr = null
     var newResult = nExpr
     while (!newResult.equals(oldResult)) {
@@ -76,7 +75,7 @@ object Reducer {
         case Nil =>
           Left(tmpExpr) // as observable
         case CaseCtx(cases) :: xs =>
-          Right((Case(tmpExpr, cases), xs)) // as redex
+          Right((Case(tmpExpr, cases), xs))
         case _ => throw new IllegalStateException("No match")
       }
     }
