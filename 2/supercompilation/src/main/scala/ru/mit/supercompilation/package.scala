@@ -10,6 +10,7 @@ package object supercompilation {
     ExprTranslator(Parser(code))
   }
 
+  // mostly for tests
   def parseExpr(code: String): Expr = {
     parseProg(code).mainExpr
   }
@@ -22,12 +23,8 @@ package object supercompilation {
     progToString(Program(expr, Nil))
   }
 
-  def substTo(index: Int, origE: Expr, substE: Expr): Expr = {
-    Subst.substTo(index, origE, substE)
-  }
-
   def subst(origE: Expr, substE: Expr): Expr = {
-    substTo(0, origE, substE)
+    Subst.subst(origE, substE)
   }
 
   def subst(origE: Expr, substitution: Substitution): Expr = {
@@ -75,21 +72,16 @@ package object supercompilation {
   }
 
   def toExpr(nExpr: NormalizedExpr): Expr = {
-    def toExpr(nExpr: NormalizedExpr): Expr = {
-      nExpr match {
-        case Left(e) => e
-        case Right((e, ctx)) =>
-          ctx.foldLeft(e) { (e, ctxStep) =>
-            ctxStep match {
-              case AppCtx(e1) => App(e, e1)
-              case CaseCtx(cases) => Case(e, cases)
-            }
+    nExpr match {
+      case Left(e) => e
+      case Right((e, ctx)) =>
+        ctx.foldLeft(e) { (e, ctxStep) =>
+          ctxStep match {
+            case AppCtx(e1) => App(e, e1)
+            case CaseCtx(cases) => Case(e, cases)
           }
-      }
+        }
     }
-
-    val preliminaryRes = toExpr(nExpr)
-    preliminaryRes
   }
 
   def isInstance(expr1: Expr, expr2: Expr): Option[Substitution] = {

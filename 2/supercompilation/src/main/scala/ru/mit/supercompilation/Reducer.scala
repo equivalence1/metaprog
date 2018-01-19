@@ -72,7 +72,7 @@ object Reducer {
 
       tmpCtx match {
         case Nil =>
-          Left(tmpExpr) // as observable
+          Left(tmpExpr)
         case CaseCtx(cases) :: xs =>
           Right((Case(tmpExpr, cases), xs))
         case _ => throw new IllegalStateException("No match")

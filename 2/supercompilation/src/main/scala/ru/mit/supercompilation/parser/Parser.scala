@@ -97,9 +97,9 @@ object Parser extends Parsers {
   */
 object ExprTranslator {
 
-  private var functionsList: List[String] = _
+  private[this] var functionsList: List[String] = _
 
-  private def translateToExpr(ast: ExprAst, scopeVariablesStack: List[String]): Expr = {
+  private[this] def translateToExpr(ast: ExprAst, scopeVariablesStack: List[String]): Expr = {
     ast match {
       case IdentifierNode(name) =>
         if (scopeVariablesStack.contains(name)) {

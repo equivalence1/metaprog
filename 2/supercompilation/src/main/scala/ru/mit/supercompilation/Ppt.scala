@@ -50,16 +50,6 @@ class Ppt(val prog: Program) {
     node.addChildren(children)
   }
 
-  private[this] def removeSubtree(node: PptNode): Unit = {
-    if (node.isLeaf) {
-      node.unfold()
-      unprocessedLeafs.remove(node)
-    } else {
-      node.children.foreach(child => removeSubtree(child))
-      node.children = null
-    }
-  }
-
   private[this] def tryFold(anc: PptNode, leaf: PptNode): Boolean = {
     val leafExpr = toExpr(leaf.expr)
     val ancExpr = toExpr(anc.expr)
@@ -73,16 +63,30 @@ class Ppt(val prog: Program) {
     }
   }
 
+  private[this] def replace(oldNode: PptNode, newNode: PptNode): Unit = {
+    def removeSubtree(node: PptNode): Unit = {
+      if (node.isLeaf) {
+        node.unfold()
+        unprocessedLeafs.remove(node)
+      } else {
+        node.children.foreach(child => removeSubtree(child))
+        node.children = null
+      }
+    }
+
+    removeSubtree(oldNode)
+    if (oldNode != root) {
+      oldNode.parent.replaceChild(oldNode, newNode)
+    } else {
+      root = newNode
+    }
+  }
+
   private[this] def doAbstract(node1: PptNode, node2: PptNode): Unit = {
     val generalization = generalize(toExpr(node1.expr), toExpr(node2.expr))
     val newExpr = Let(generalization.subst1, generalization.gExpr)
     val newNode = PptNode(node1.parent, normalize(newExpr))
-    removeSubtree(node1)
-    if (node1 != root) {
-      node1.parent.resetChild(node1, newNode)
-    } else {
-      root = newNode
-    }
+    replace(node1, node2)
     unprocessedLeafs.add(newNode)
   }
 
@@ -95,32 +99,35 @@ class Ppt(val prog: Program) {
     }
   }
 
-  def computeRelAncs(node: PptNode): List[PptNode] = {
-    var res: List[PptNode] = Nil
-    var anc = node.parent
-    while (anc != null) {
-      if (isCycleCandidate(anc.expr)) {
-        res = anc :: res
-      }
-      anc = anc.parent
-    }
-    res.reverse
+  private[this] def computeRelAncs(node: PptNode): List[PptNode] = {
+    node.ancestors.filter(n => isCycleCandidate(n.expr)).toList
   }
 
-  def find(nodes: List[PptNode], leaf: PptNode): Option[PptNode] = {
-    nodes.find(node => isEmbedded(toExpr(node.expr), toExpr(leaf.expr)) && getExprClass(node.expr) == getExprClass(leaf.expr))
+  private[this] def findCandidateAnc(nodes: List[PptNode], leaf: PptNode): Option[PptNode] = {
+    nodes.find(node => isEmbedded(toExpr(node.expr), toExpr(leaf.expr)) &&
+      getExprClass(node.expr) == getExprClass(leaf.expr))
   }
 
-  def split(node: PptNode, expr: NormalizedExpr): Unit = {
+  /*
+    Actually, split stage is a bit more complicated then just
+    drive. But for now just driving is enough.
+   */
+  private[this] def split(node: PptNode, expr: NormalizedExpr): Unit = {
     drive(node)
   }
 
+  /**
+    * Builds partial process tree.
+    */
   def build(): Unit = {
     while (unprocessedLeafs.nonEmpty) {
       val leaf = unprocessedLeafs.iterator.next()
       unprocessedLeafs.remove(leaf)
+
       val relAncs = computeRelAncs(leaf)
-      val findRes = find(relAncs, leaf)
+      val findRes = findCandidateAnc(relAncs, leaf)
+
+      // TODO this is messy
       findRes match {
         case Some(anc) =>
           if (!tryFold(anc, leaf)) {
@@ -149,21 +156,21 @@ class Ppt(val prog: Program) {
           case None => App(prevExpr, ConfVar(id))
         }
       }
+
       Program(mainExpr, Nil)
     } else {
       val fun = "f" + nextFreeFunIndex()
       val args = node.linkedByConf.toSeq.filter(elem => elem._2 != 0).map(_._1)
       generatedFunction.+=((node, (fun, args)))
 
-      val unlinkedRes = residualizeUnlinked(node)
-      val body = unlinkedRes.mainExpr
       var confSubst: List[Expr] = Nil
       args.indices.foreach { id =>
         confSubst = BVar(id) :: confSubst
       }
 
+      val unlinkedRes = residualizeUnlinked(node)
+      val body = unlinkedRes.mainExpr
       val s: Substitution = args.map(id => ConfVar(id)).zip(confSubst).toList
-
       var wrappedBody: Expr = subst(body, s)
       args.indices.foreach { _ =>
         wrappedBody = Lambda(wrappedBody)
@@ -227,35 +234,34 @@ class Ppt(val prog: Program) {
     }
   }
 
+  /**
+    * After tree has been built, this method translates it to final [[Program]].
+    */
   def residualize(): Program = {
     residualize(root)
   }
 
-  // TODO remove public var
-  case class PptNode(parent: PptNode, var expr: NormalizedExpr) {
+  case class PptNode(parent: PptNode, expr: NormalizedExpr) {
 
     // The order for children nodes is important
     var children: List[PptNode] = Nil
     var link: PptLink = _
     val linkedBy = new mutable.HashSet[PptNode]()
     val linkedByConf: mutable.SortedMap[Int, Int] = mutable.SortedMap.empty[Int, Int]
-    var isAfterUnfold = false
 
     def addChildren(childrenExpr: List[NormalizedExpr]): Unit = {
       children = childrenExpr.map(childExpr => PptNode(this, childExpr))
       children.foreach(child => unprocessedLeafs.add(child))
     }
 
-    def resetChild(oldChild: PptNode, newChild: PptNode): Unit = {
-      var newChildren: List[PptNode] = Nil
-      for (child <- children) {
+    def replaceChild(oldChild: PptNode, newChild: PptNode): Unit = {
+      children = for (child <- children) yield {
         if (child == oldChild) {
-          newChildren = newChild :: newChildren
+          newChild
         } else {
-          newChildren = child :: newChildren
+          child
         }
       }
-      children = newChildren.reverse
     }
 
     def isLeaf: Boolean = {
@@ -280,26 +286,7 @@ class Ppt(val prog: Program) {
       link != null || linkedBy.nonEmpty
     }
 
-    private def depth(): Int = {
-      if (parent == null) {
-        4
-      } else {
-        4 + parent.depth()
-      }
-    }
-
-    override def toString: String = {
-      var s: String = ""
-      s = expr.toString
-      for (child <- children) {
-        s += "\n"
-        0.until(depth()).foreach {_ =>
-          s += " "
-        }
-        s += child.toString
-      }
-      s
-    }
+    def ancestors: Iterator[PptNode] = Iterator.iterate(this.parent)(_.parent).takeWhile(_ != null)
 
   }
 

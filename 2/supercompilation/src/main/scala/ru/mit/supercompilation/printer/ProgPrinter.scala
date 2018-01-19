@@ -13,7 +13,7 @@ object ProgPrinter {
   var funcs: List[String] = _
 
   // TODO: to many ()
-  private def print(e: Expr, namesStack: List[String]): Unit = {
+  private[this] def print(e: Expr, namesStack: List[String]): Unit = {
     e match {
       case BVar(n) =>
         sb.append(namesStack(n))

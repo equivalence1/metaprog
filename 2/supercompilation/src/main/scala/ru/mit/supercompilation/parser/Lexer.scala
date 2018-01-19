@@ -31,7 +31,7 @@ object Lexer extends RegexParsers {
   def where:         Parser[WHERE.type]         = "where(\\b|\\n)".r          ^^   {_ => WHERE}
   def semicolon:     Parser[SEMICOLON.type ]    = ";"                         ^^   {_ => SEMICOLON}
 
-  private def tokenize: Parser[List[Token]] = {
+  private[this] def tokenize: Parser[List[Token]] = {
     phrase(rep1(
         lambda
         | dot

@@ -6,7 +6,7 @@ object Subst {
 
   // substitutions into bounded variable (like when applying a lambda to an expression)
 
-  private def shiftFrom(from: Int, k: Int, expr: Expr): Expr = {
+  private[this] def shiftFrom(from: Int, k: Int, expr: Expr): Expr = {
     def shift(e: Expr): Expr = {
       shiftFrom(from, k, e)
     }
@@ -29,7 +29,7 @@ object Subst {
     shiftFrom(0, k, expr)
   }
 
-  def substTo(index: Int, origE: Expr, substE: Expr): Expr = {
+  private[this] def substTo(index: Int, origE: Expr, substE: Expr): Expr = {
     def subst(e: Expr): Expr = {
       substTo(index, e, substE)
     }
@@ -54,8 +54,8 @@ object Subst {
 
   // substitutions of configuration variables
 
-  private def substConf(index: Int, origE: Expr, substE: Expr, lvl: Int): Expr = {
-    def substConfSame(e: Expr): Expr = {
+  private[this] def substConf(index: Int, origE: Expr, substE: Expr, lvl: Int): Expr = {
+    def subst(e: Expr): Expr = {
       substConf(index, e, substE, lvl)
     }
 
@@ -69,12 +69,12 @@ object Subst {
       case ConfVar(v) => if (v == index) substE else ConfVar(v)
       case gv@GlobalVar(_) => gv
       case Lambda(e) => Lambda(substConf(index, e, substE, lvl + 1))
-      case App(e1, e2) => App(substConfSame(e1), substConfSame(e2))
+      case App(e1, e2) => App(subst(e1), subst(e2))
       case Let(s, e) =>
-        Let(s.map(e => (e._1, substConfSame(e._2))), substConfSame(e))
+        Let(s.map(e => (e._1, subst(e._2))), subst(e))
       case f@Fun(_) => f
-      case Constr(name, es) => Constr(name, es.map {e => substConfSame(e)})
-      case Case(selector, cases) => Case(substConfSame(selector),
+      case Constr(name, es) => Constr(name, es.map {e => subst(e)})
+      case Case(selector, cases) => Case(subst(selector),
         cases.map {br => CaseBranch(br.constrName, br.nrArgs, substConf(index, br.expr, substE, lvl + br.nrArgs))})
     }
   }

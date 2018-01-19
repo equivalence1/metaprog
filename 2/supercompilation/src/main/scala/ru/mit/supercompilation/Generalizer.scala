@@ -11,7 +11,7 @@ object Generalizer {
     commonSubExprRule((commonFunctor.gExpr, sortedSubts1, sortedSubts2))
   }
 
-  private def commonFunctorRule(e1: Expr, e2: Expr): Generalization = {
+  private[this] def commonFunctorRule(e1: Expr, e2: Expr): Generalization = {
     (e1, e2) match {
       case (v@BVar(n), BVar(m)) if n == m => (v, Nil, Nil)
       case (v@GlobalVar(name1), GlobalVar(name2)) if name1 == name2 => (v, Nil, Nil)
@@ -58,7 +58,7 @@ object Generalizer {
     }
   }
 
-  private def commonSubExprRule(r: Generalization): Generalization = {
+  private[this] def commonSubExprRule(r: Generalization): Generalization = {
     r match {
       case g@Generalization(_, Nil, Nil) => g
       case Generalization(e, (s1 :: subst1), (s2 :: subst2)) if s1._1 == s2._1 =>
@@ -72,7 +72,7 @@ object Generalizer {
     }
   }
 
-  private def haveCommonSubst(sub: Substitution, e1: Expr, sub1: Substitution, e2: Expr): Option[ConfVar] = {
+  private[this] def haveCommonSubst(sub: Substitution, e1: Expr, sub1: Substitution, e2: Expr): Option[ConfVar] = {
     (sub, sub1) match {
       case (Nil, Nil) => None
       case (s1 :: subs1, s2 :: subs2) =>

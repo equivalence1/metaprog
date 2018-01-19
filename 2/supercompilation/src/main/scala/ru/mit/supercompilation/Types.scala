@@ -49,6 +49,10 @@ object Types {
   // }}}
 
   case class Generalization(gExpr: Expr, subst1: Substitution, subst2: Substitution)
+
+  /**
+    * So that I don't need to write "Generalization(...)" every time
+    */
   implicit def tuple2Generalization(tuple3: (Expr, Substitution, Substitution)): Generalization =
     Generalization(tuple3._1, tuple3._2, tuple3._3)
 
