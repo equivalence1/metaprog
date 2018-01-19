@@ -203,18 +203,12 @@ package object supercompilation {
     getExprClass(e) > 1
   }
 
-  // TODO: bad that global -- affects testing, need to invalidate each time
-  private[supercompilation] var nextId: Int = -1
   def nextFreeIndex(): Int = {
-    nextId += 1
-    nextId
+    Supercompiler.nextFreeIndex()
   }
 
-  // TODO same
-  private[supercompilation] var nextFunId: Int = -1
   def nextFreeFunIndex(): Int = {
-    nextFunId += 1
-    nextFunId
+    Supercompiler.nextFreeFunIndex()
   }
 
   def flattenApp(a: App): List[Expr] = {
