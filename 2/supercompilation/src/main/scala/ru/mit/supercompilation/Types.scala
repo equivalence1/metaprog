@@ -39,7 +39,7 @@ object Types {
 
   type Context = List[ContextLevel]
   type Observable = Expr
-  type RedexInContext = (Expr, Context)
+  type RedexInContext = (Expr, Context) // mostly used in pattern-matching, so no need in case class
   type NormalizedExpr = Either[Observable, RedexInContext]
   case class NormalizedProg(NormalizedExpr: NormalizedExpr, fdefs: List[FDef])
 

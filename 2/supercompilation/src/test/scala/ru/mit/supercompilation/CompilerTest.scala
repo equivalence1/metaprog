@@ -1,48 +1,52 @@
 package ru.mit.supercompilation
 
 import org.scalatest.FunSuite
-import ru.mit.supercompilation.printer.ProgPrinter
 
-class PptTest extends FunSuite {
+/**
+  * It's actually pretty hard to even define in which situation
+  * a test is `passed`. So for now just print results on some test
+  * examples
+  */
+class CompilerTest extends FunSuite {
   test("Success") {
-    val sProg =
+    val code =
       """foo (case Nil of {NotNil -> Nil | Nil -> case (\x . x) NotNil of {NotNil -> Nil}})
         |  where
         |    foo = \x . case x of {NotNil -> Fail | Nil -> Success};
       """.stripMargin
-    val prog = parseProg(sProg)
-    val ppt = new Ppt(prog)
-    ppt.build()
-    println(ProgPrinter(ppt.residualize()))
+    println("before:")
+    println(code)
+    println("\nafter:")
+    println(Supercompiler(code))
   }
 
   test("snd") {
-    val sProg =
+    val code =
       """snd (Cons 1 (snd (Cons 2 3)))
         |    where
         |      snd = \x . case x of { Cons a b -> b };
       """.stripMargin
-    val prog = parseProg(sProg)
-    val ppt = new Ppt(prog)
-    ppt.build()
-    println(ProgPrinter(ppt.residualize()))
+    println("before:")
+    println(code)
+    println("\nafter:")
+    println(Supercompiler(code))
   }
 
     test("Example 1") {
-    val sProg =
+    val code =
       """foo 1 xs
         |    where
         |      foo = \x . \xs . case xs of {Cons a b -> foo x b
         |                                    | Nil -> x};
       """.stripMargin
-    val prog = parseProg(sProg)
-    val ppt = new Ppt(prog)
-    ppt.build()
-    println(ProgPrinter(ppt.residualize()))
+      println("before:")
+      println(code)
+      println("\nafter:")
+      println(Supercompiler(code))
   }
 
   test("Example 2") {
-    val sProg =
+    val code =
       """id (apply id (app xs ys))
         |  where
         |    id = \x -> x;
@@ -50,26 +54,26 @@ class PptTest extends FunSuite {
         |    app = \xs -> \ys -> case xs of { Nil -> ys
         |                                   | Cons x xs -> Cons x (app xs ys) };
       """.stripMargin
-    val prog = parseProg(sProg)
-    val ppt = new Ppt(prog)
-    ppt.build()
-    println(ProgPrinter(ppt.residualize()))
+    println("before:")
+    println(code)
+    println("\nafter:")
+    println(Supercompiler(code))
   }
 
   test("Example 3") {
-    val sProg =
+    val code =
       """app (app xs ys) zs
         |    where
         |      app = \xs -> \ys -> case xs of { Nil -> ys | Cons x xs -> Cons x (app xs ys) };
       """.stripMargin
-    val prog = parseProg(sProg)
-    val ppt = new Ppt(prog)
-    ppt.build()
-    println(ProgPrinter(ppt.residualize()))
+    println("before:")
+    println(code)
+    println("\nafter:")
+    println(Supercompiler(code))
   }
 
   test("Example 4") {
-    val sProg =
+    val code =
       """sum (map (\x -> mult x x) (int Z n))
         |  where
         |    int = \l -> \r -> case gt l r of { True -> Nil
@@ -79,14 +83,14 @@ class PptTest extends FunSuite {
         |    sum = \xs -> case xs of { Nil -> Z
         |                            | Cons x xs -> plus x (sum xs) };
       """.stripMargin
-    val prog = parseProg(sProg)
-    val ppt = new Ppt(prog)
-    ppt.build()
-    println(ProgPrinter(ppt.residualize()))
+    println("before:")
+    println(code)
+    println("\nafter:")
+    println(Supercompiler(code))
   }
 
   test("Example 5") {
-    val sProg =
+    val code =
       """length (concat xss)
         |    where
         |      xss = Cons (Cons a (Cons b (Cons c Nil))) (Cons Nil (Cons (Cons d (Cons d Nil)) Nil));
@@ -96,14 +100,14 @@ class PptTest extends FunSuite {
         |                        | Cons xs xss -> app xs (concat xss) };
         |      app = \xs -> \ys -> case xs of { Nil -> ys | Cons x xs -> Cons x (app xs ys) };
       """.stripMargin
-    val prog = parseProg(sProg)
-    val ppt = new Ppt(prog)
-    ppt.build()
-    println(ProgPrinter(ppt.residualize()))
+    println("before:")
+    println(code)
+    println("\nafter:")
+    println(Supercompiler(code))
   }
 
   test("Example 6") {
-    val sProg =
+    val code =
       """length (duplicate xs)
         |    where
         |      length = \xs -> case xs of { Nil -> Z | Cons x xs -> S (length xs) };
@@ -111,14 +115,14 @@ class PptTest extends FunSuite {
         |                          { Nil -> Nil
         |                          | Cons x xs -> Cons x (Cons x (duplicate xs)) };
       """.stripMargin
-    val prog = parseProg(sProg)
-    val ppt = new Ppt(prog)
-    ppt.build()
-    println(ProgPrinter(ppt.residualize()))
+    println("before:")
+    println(code)
+    println("\nafter:")
+    println(Supercompiler(code))
   }
 
   test("Example 7") {
-    val sProg =
+    val code =
       """length (concat xss)
         |    where
         |      length = \xs -> case xs of { Nil -> Z | Cons x xs -> S (length xs) };
@@ -127,9 +131,9 @@ class PptTest extends FunSuite {
         |                        | Cons xs xss -> app xs (concat xss) };
         |      app = \xs -> \ys -> case xs of { Nil -> ys | Cons x xs -> Cons x (app xs ys) };
       """.stripMargin
-    val prog = parseProg(sProg)
-    val ppt = new Ppt(prog)
-    ppt.build()
-    println(ProgPrinter(ppt.residualize()))
+    println("before:")
+    println(code)
+    println("\nafter:")
+    println(Supercompiler(code))
   }
 }
