@@ -1,14 +1,26 @@
 package ru.mit.supercompilation
 
-import org.scalatest.FunSuite
+import org.scalatest.{BeforeAndAfterEach, FunSuite}
 
 /**
   * It's actually pretty hard to even define in which situation
   * a test is `passed`. So for now just print results on some test
   * examples
   */
-class CompilerTest extends FunSuite {
-  test("Success") {
+class CompilerTest extends FunSuite with BeforeAndAfterEach {
+
+  var curTest = 0
+
+  override def beforeEach(): Unit = {
+    curTest += 1
+    println(s"     Example $curTest:\n")
+  }
+
+  override def afterEach(): Unit = {
+    println("\n====================\n")
+  }
+
+  test("Example 1") {
     val code =
       """foo (case Nil of {NotNil -> Nil | Nil -> case (\x . x) NotNil of {NotNil -> Nil}})
         |  where
@@ -20,7 +32,7 @@ class CompilerTest extends FunSuite {
     println(Supercompiler(code))
   }
 
-  test("snd") {
+  test("Example 2") {
     val code =
       """snd (Cons 1 (snd (Cons 2 3)))
         |    where
@@ -32,7 +44,7 @@ class CompilerTest extends FunSuite {
     println(Supercompiler(code))
   }
 
-    test("Example 1") {
+    test("Example 3") {
     val code =
       """foo 1 xs
         |    where
@@ -45,7 +57,7 @@ class CompilerTest extends FunSuite {
       println(Supercompiler(code))
   }
 
-  test("Example 2") {
+  test("Example 4") {
     val code =
       """id (apply id (app xs ys))
         |  where
@@ -60,7 +72,7 @@ class CompilerTest extends FunSuite {
     println(Supercompiler(code))
   }
 
-  test("Example 3") {
+  test("Example 5") {
     val code =
       """app (app xs ys) zs
         |    where
@@ -72,7 +84,7 @@ class CompilerTest extends FunSuite {
     println(Supercompiler(code))
   }
 
-  test("Example 4") {
+  test("Example 6") {
     val code =
       """sum (map (\x -> mult x x) (int Z n))
         |  where
@@ -89,7 +101,7 @@ class CompilerTest extends FunSuite {
     println(Supercompiler(code))
   }
 
-  test("Example 5") {
+  test("Example 7") {
     val code =
       """length (concat xss)
         |    where
@@ -106,7 +118,7 @@ class CompilerTest extends FunSuite {
     println(Supercompiler(code))
   }
 
-  test("Example 6") {
+  test("Example 8") {
     val code =
       """length (duplicate xs)
         |    where
@@ -121,7 +133,7 @@ class CompilerTest extends FunSuite {
     println(Supercompiler(code))
   }
 
-  test("Example 7") {
+  test("Example 9") {
     val code =
       """length (concat xss)
         |    where
