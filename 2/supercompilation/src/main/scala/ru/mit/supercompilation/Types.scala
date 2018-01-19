@@ -14,10 +14,7 @@ object Types {
   sealed trait Expr
   sealed trait Var extends Expr
   case class BVar(v: Int) extends Var // bounded variable
-  // unbounded variable. We only generate them during generalization and make them
-  // function's arguments in the end
-  case class ConfVar(id: Int) extends Var with Ordered[ConfVar] {
-    // TODO only need it in generalization -- move it there
+  case class ConfVar(id: Int) extends Var with Ordered[ConfVar] { // unbounded variable
     import scala.math.Ordered.orderingToOrdered
     def compare(that: ConfVar): Int = (this.id, this.id) compare (that.id, that.id)
   }

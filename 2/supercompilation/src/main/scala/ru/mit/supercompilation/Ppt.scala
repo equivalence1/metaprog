@@ -86,7 +86,7 @@ class Ppt(val prog: Program) {
     val generalization = generalize(toExpr(node1.expr), toExpr(node2.expr))
     val newExpr = Let(generalization.subst1, generalization.gExpr)
     val newNode = PptNode(node1.parent, normalize(newExpr))
-    replace(node1, node2)
+    replace(node1, newNode)
     unprocessedLeafs.add(newNode)
   }
 

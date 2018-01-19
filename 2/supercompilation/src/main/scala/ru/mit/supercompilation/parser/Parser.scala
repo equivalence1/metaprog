@@ -32,15 +32,17 @@ object Parser extends Parsers {
   }
 
   private def expr: Parser[ExprAst] = {
-    val innerExpr = OPEN_BRACKET ~> expr <~ CLOSE_BRACKET
+    val innerExpr = OPEN_BRACKET ~ expr ~ CLOSE_BRACKET ^^ {
+      case _ ~ e ~ _ => e
+    }
     val base = identifier | innerExpr | emptyConstructor
 
     val constructor = emptyConstructor ~ rep(base) ^^ {
       case ConstructorNode(name, Nil) ~ args => ConstructorNode(name, args)
     }
 
-    val lambda = LAMBDA ~> rep1(identifier <~ (DOT | ARROW)) ~ expr ^^ {
-      case vars ~ e => LambdaNode(vars.map(ident => ident.name), e)
+    val lambda = LAMBDA ~ rep1(identifier) ~ (DOT | ARROW) ~ expr ^^ {
+      case _ ~ vars ~ _ ~ e => LambdaNode(vars.map(ident => ident.name), e)
     }
 
     val app = base ~ rep1(base) ^^ {
@@ -51,19 +53,19 @@ object Parser extends Parsers {
     val caseConstructor = emptyConstructor ~ rep(identifier) ^^ {
       case ConstructorNode(name, _) ~ args => CaseConstructorNode(name, args.map(a => a.name))
     }
-    val singleCase = caseConstructor ~ (ARROW ~> expr) ^^ {
-      case (c@CaseConstructorNode(_, _)) ~ e => (c, e)
+    val singleCase = caseConstructor ~ ARROW ~ expr ^^ {
+      case (c@CaseConstructorNode(_, _)) ~ _ ~ e => (c, e)
     }
-    val _case = CASE ~> expr ~ (OF ~> CURLY_OPEN ~> repsep(singleCase, ALTERNATION) <~ CURLY_CLOSE) ^^ {
-      case e ~ cases => CaseNode(e, cases)
+    val _case = CASE ~ expr ~ OF ~ CURLY_OPEN ~ repsep(singleCase, ALTERNATION) ~ CURLY_CLOSE ^^ {
+      case _ ~ e ~ _ ~ _ ~ cases ~ _ => CaseNode(e, cases)
     }
 
     _case | lambda | constructor | app | base
   }
 
   private def functionDefinition: Parser[AstFDef] = {
-    (identifier <~ ASSIGNMENT) ~ (expr <~ SEMICOLON) ^^ {
-      case IdentifierNode(fName) ~ e => AstFDef(fName, e)
+    identifier ~ ASSIGNMENT ~ expr ~ SEMICOLON ^^ {
+      case IdentifierNode(fName) ~ _ ~ e ~ _ => AstFDef(fName, e)
     }
   }
 
@@ -71,8 +73,8 @@ object Parser extends Parsers {
     val onlyExpr = expr ^^ {
       e => ProgramAst(e, Nil)
     }
-    val exprWithWhere = (expr <~ WHERE) ~ rep(functionDefinition) ^^ {
-      case e ~ fDefs => ProgramAst(e, fDefs)
+    val exprWithWhere = expr ~ WHERE ~ rep(functionDefinition) ^^ {
+      case e ~ _ ~ fDefs => ProgramAst(e, fDefs)
     }
 
     phrase(exprWithWhere | onlyExpr)

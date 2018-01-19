@@ -65,9 +65,9 @@ class ParserTest extends FunSuite {
 
   test("program with definitions") {
     val expectedExpr = AppNode(AppNode(IdentifierNode("f"), IdentifierNode("g")), ConstructorNode("Z", Nil))
-    val expectedFDef = ("f", LambdaNode("f" :: "x" :: Nil, AppNode(IdentifierNode("f"), IdentifierNode("x"))))
-    val expectedGDef = ("g", LambdaNode("x" :: Nil, IdentifierNode("x")))
-    assertResult((expectedExpr, expectedFDef :: expectedGDef :: Nil)) {
+    val expectedFDef = AstFDef("f", LambdaNode(List("f", "x"), AppNode(IdentifierNode("f"), IdentifierNode("x"))))
+    val expectedGDef = AstFDef("g", LambdaNode(List("x"), IdentifierNode("x")))
+    assertResult(ProgramAst(expectedExpr, List(expectedFDef, expectedGDef))) {
       Parser(
         """f g Z
           |  where
