@@ -1,0 +1,8 @@
+sum (map (\x -> mult x x) (int Z n))
+  where
+    int = \l -> \r -> case gt l r of { True -> Nil
+                                     | False -> Cons l (int (S l) r) };
+    map = \f -> \xs -> case xs of { Nil -> Nil
+                                  | Cons x xs -> Cons (f x) (map f xs) };
+    sum = \xs -> case xs of { Nil -> Z
+                            | Cons x xs -> plus x (sum xs) };
