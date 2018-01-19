@@ -66,8 +66,8 @@ class GeneralizationTest extends FunSuite {
   test("Case expr 2") {
     val e1 = parseExpr("""case x of {Nil -> x | Constr a b -> a}""")
     val e2 = parseExpr("""case x of {Nil -> x | Cons a b -> b}""")
-    val sRes1 = """case x of {Nil -> x | Constr x0 x1 -> x0}"""
-    val sRes2 = """case x of {Nil -> x | Cons x0 x1 -> x1}"""
+    val sRes1 = """case x of {Constr x0 x1 -> x0 | Nil -> x}"""
+    val sRes2 = """case x of {Cons x0 x1 -> x1 | Nil -> x}"""
 
     val generalization = generalize(e1, e2)
 

@@ -129,7 +129,7 @@ object ExprTranslator {
             val newScope = constr.args.reverse ++ scopeVariablesStack
             CaseBranch(constr.name, constr.args.size, translateToExpr(e, newScope))
           }
-        Case(translateToExpr(selector, scopeVariablesStack), newCases)
+        Case(translateToExpr(selector, scopeVariablesStack), newCases.sortBy(_.constrName))
 
       case CaseConstructorNode(_, _) => throw new RuntimeException("CaseConstructorNode outside case")
     }

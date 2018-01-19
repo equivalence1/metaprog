@@ -17,7 +17,7 @@ class ExprPrinterTest extends FunSuite {
         |  where
         |    f = (\x0 -> (\x1 -> (x0 x1)));
         |    g = (\x0 -> x0);
-        |    h = case x of {Nil -> Z | Cons x0 x1 -> (S Z)};
+        |    h = case x of {Cons x0 x1 -> (S Z) | Nil -> Z};
       """.stripMargin.trim()) {
       val code =
         """f g Z

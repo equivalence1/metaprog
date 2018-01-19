@@ -66,7 +66,7 @@ class ReducerTest extends FunSuite {
     val sProg =
       """foo (case Nil of {NotNil -> Nil | Nil -> case (\x . x) NotNil of {NotNil -> Nil}})
         |  where
-        |    foo = \x . case x of {NotNil -> Fail | Nil -> Success};
+        |    foo = \x . case x of {Nil -> Success | NotNil -> Fail};
       """.stripMargin
     val prog = parseProg(sProg)
     val reducedExpr = Reducer.nReduce(normalize(prog.mainExpr), prog.fdefs).left.get

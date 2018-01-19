@@ -36,10 +36,8 @@ object Generalizer {
 
       case (Case(selector1, cases1), Case(selector2, cases2))
           if cases1.map(_.constrName).sorted == cases2.map(_.constrName).sorted =>
-        val sortedCases1 = cases1.sortBy(_.constrName)
-        val sortedCases2 = cases2.sortBy(_.constrName)
         val selectorsG = commonFunctorRule(selector1, selector2)
-        val casesG = sortedCases1.zip(sortedCases2).map { _case =>
+        val casesG = cases1.zip(cases2).map { _case =>
           (_case._1.constrName, _case._1.nrArgs, commonFunctorRule(_case._1.expr, _case._2.expr))
         }
 

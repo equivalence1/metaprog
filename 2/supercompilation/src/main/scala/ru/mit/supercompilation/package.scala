@@ -126,17 +126,12 @@ package object supercompilation {
           } else {
             None
           }
-        case (Case(selector1, cases1), Case(selector2, cases2)) =>
+        case (c1@Case(selector1, cases1), c2@Case(selector2, cases2)) if c1.hasSameBranches(c2) =>
           val selectorsInstance = isInstance(selector1, selector2, lvl)
           if (selectorsInstance.isEmpty) {
             return None
           }
-          val sortedCases1 = cases1.sortBy(_.constrName)
-          val sortedCases2 = cases2.sortBy(_.constrName)
-          if (sortedCases1.map(c => (c.constrName, c.nrArgs)) != sortedCases2.map(c => (c.constrName, c.nrArgs))) {
-            return None
-          }
-          val zippedCases = sortedCases1.map(c => (c.nrArgs, c.expr)).zip(sortedCases2.map(_.expr))
+          val zippedCases = cases1.map(c => (c.nrArgs, c.expr)).zip(cases2.map(_.expr))
           var casesRes: Substitution = Nil
           for (((nrArgs, e1), e2) <- zippedCases) {
             isInstance(e1, e2, lvl + nrArgs) match {

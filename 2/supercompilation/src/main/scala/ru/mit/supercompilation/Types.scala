@@ -24,7 +24,17 @@ object Types {
   case class Let(subst: Substitution, e2: Expr) extends Expr
   case class Fun(name: String) extends Expr
   case class Constr(name: String, es: List[Expr]) extends Expr
-  case class Case(selector: Expr, cases: List[CaseBranch]) extends Expr
+  case class Case(selector: Expr, cases: List[CaseBranch]) extends Expr {
+
+    def getBrDescriptors: List[(String, Int)] = {
+      this.cases.map(br => (br.constrName, br.nrArgs))
+    }
+
+    def hasSameBranches(that: Case): Boolean = {
+      this.getBrDescriptors == that.getBrDescriptors
+    }
+
+  }
 
   case class FDef(fName: String, body: Expr)
   case class Program(mainExpr: Expr, fdefs: List[FDef])
