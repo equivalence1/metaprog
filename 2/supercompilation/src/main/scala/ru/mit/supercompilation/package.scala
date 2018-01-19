@@ -63,7 +63,7 @@ package object supercompilation {
       case f@Fun(_) => f
       case Lambda(e) => Lambda(replaceUnbound(e, lvl + 1))
       case App(e1, e2) => App(replaceUnbound(e1, lvl), replaceUnbound(e2, lvl))
-      case Let(s, e) => Let(s, replaceUnbound(e, lvl)) // TODO should i do something with s?
+      case Let(s, e) => Let(s, replaceUnbound(e, lvl))
       case c@Constr(_, _) => c
       case Case(selector, cases) =>
         val newCases = cases.map(c => CaseBranch(c.constrName, c.nrArgs, replaceUnbound(c.expr, lvl + c.nrArgs)))
