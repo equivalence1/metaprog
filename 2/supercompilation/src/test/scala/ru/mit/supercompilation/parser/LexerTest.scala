@@ -20,7 +20,7 @@ class LexerTest extends FunSuite {
   }
 
   test("Lexer: full program") {
-    assertResult(IDENTIFIER("f") :: CONSTRUCTOR("Z") :: IN :: IDENTIFIER("x") ::
+    assertResult(IDENTIFIER("f") :: CONSTRUCTOR("Z") ::
       WHERE :: IDENTIFIER("f") :: ASSIGNMENT :: LAMBDA :: IDENTIFIER("x") :: DOT :: IDENTIFIER("x") :: SEMICOLON :: Nil) {
       Lexer(
         """f Z
