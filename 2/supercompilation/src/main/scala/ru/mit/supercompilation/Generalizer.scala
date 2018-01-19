@@ -11,8 +11,8 @@ object Generalizer {
     commonSubExprRule((commonFunctor.gExpr, sortedSubts1, sortedSubts2))
   }
 
-  private[this] def commonFunctorRule(e1: Expr, e2: Expr): Generalization = {
-    (e1, e2) match {
+  private[this] def commonFunctorRule(expr1: Expr, expr2: Expr): Generalization = {
+    (expr1, expr2) match {
       case (v@BVar(n), BVar(m)) if n == m => (v, Nil, Nil)
       case (v@GlobalVar(name1), GlobalVar(name2)) if name1 == name2 => (v, Nil, Nil)
       case (v@ConfVar(n), ConfVar(m)) if n == m => (v, Nil, Nil)
@@ -28,7 +28,7 @@ object Generalizer {
         (App(res1.gExpr, res2.gExpr), res1.subst1 ++ res2.subst1, res1.subst2 ++ res2.subst2)
 
       case (Constr(name1, es1), Constr(name2, es2)) if name1 == name2 =>
-        val esGeneralizations = es1.zip(es2).map(e => commonFunctorRule(e._1, e._2))
+        val esGeneralizations = es1.zip(es2).map { case (e1, e2) => commonFunctorRule(e1, e2) }
         val newEs = esGeneralizations.map(_.gExpr)
         val newSubst1 = esGeneralizations.flatMap(_.subst1)
         val newSubst2 = esGeneralizations.flatMap(_.subst2)
@@ -52,7 +52,7 @@ object Generalizer {
 
       case _ =>
         val cf = ConfVar(nextFreeIndex())
-        (cf, List((cf, e1)), List((cf, e2)))
+        (cf, List((cf, expr1)), List((cf, expr2)))
     }
   }
 

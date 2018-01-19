@@ -44,7 +44,9 @@ object Subst {
       case f@Fun(_) => f
       case Constr(name, es) => Constr(name, es.map {e => subst(e)})
       case Case(selector, cases) => Case(subst(selector),
-        cases.map {br => CaseBranch(br.constrName, br.nrArgs, substTo(index + br.nrArgs, br.expr, shift(br.nrArgs, substE)))})
+        cases.map { case CaseBranch(constrName, nrArgs, expr) =>
+          CaseBranch(constrName, nrArgs, substTo(index + nrArgs, expr, shift(nrArgs, substE)))
+        })
     }
   }
 
@@ -75,7 +77,9 @@ object Subst {
       case f@Fun(_) => f
       case Constr(name, es) => Constr(name, es.map {e => subst(e)})
       case Case(selector, cases) => Case(subst(selector),
-        cases.map {br => CaseBranch(br.constrName, br.nrArgs, substConf(index, br.expr, substE, lvl + br.nrArgs))})
+        cases.map { case CaseBranch(constrName, nrArgs, expr) =>
+          CaseBranch(constrName, nrArgs, substConf(index, expr, substE, lvl + nrArgs))
+        })
     }
   }
 

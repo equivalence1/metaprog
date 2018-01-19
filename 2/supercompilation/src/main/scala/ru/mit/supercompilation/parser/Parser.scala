@@ -123,9 +123,7 @@ object ExprTranslator {
 
       case CaseNode(selector, cases) =>
         val newCases =
-          cases.map { branch =>
-            val constr = branch._1
-            val e = branch._2
+          cases.map { case (constr, e) =>
             val newScope = constr.args.reverse ++ scopeVariablesStack
             CaseBranch(constr.name, constr.args.size, translateToExpr(e, newScope))
           }

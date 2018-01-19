@@ -21,14 +21,7 @@ object HomEmbedding {
         es1.zip(es2).count(e => !isEmbedded(e._1, e._2)) == 0
       case (Lambda(e1), Lambda(e2)) => isEmbedded(e1, e2)
       case (App(e11, e12), App(e21, e22)) => isEmbedded(e11, e21) && isEmbedded(e12, e22)
-      case (Case(selector1, cases1), Case(selector2, cases2)) =>
-        val sortedCases1 = cases1.sortBy(_.constrName)
-        val sortedCases2 = cases2.sortBy(_.constrName)
-        val constructors1 = sortedCases1.map(c => (c.constrName, c.nrArgs))
-        val constructors2 = sortedCases2.map(c => (c.constrName, c.nrArgs))
-        if (constructors1 != constructors2) {
-          return false
-        }
+      case (c1@Case(selector1, cases1), c2@Case(selector2, cases2)) if c1.hasSameBranches(c2) =>
         val zippedExprs = cases1.map(_.expr).zip(cases2.map(_.expr))
         val notEmbeddedCnt = zippedExprs.count(e => !isEmbedded(e._1, e._2))
         isEmbedded(selector1, selector2) && notEmbeddedCnt == 0

@@ -132,14 +132,14 @@ package object supercompilation {
             return None
           }
           val zippedCases = cases1.map(c => (c.nrArgs, c.expr)).zip(cases2.map(_.expr))
-          var casesRes: Substitution = Nil
-          for (((nrArgs, e1), e2) <- zippedCases) {
-            isInstance(e1, e2, lvl + nrArgs) match {
-              case Some(subst) => casesRes = casesRes ++ subst
-              case None => return None
-            }
+          val casesRes = zippedCases.view.map { case ((nrArgs, e1), e2) =>
+            isInstance(e1, e2, lvl + nrArgs)
           }
-          Some(selectorsInstance.get ++ casesRes)
+          if (casesRes.exists(_.isEmpty)) {
+            None
+          } else {
+            Some(selectorsInstance.get ++ casesRes.flatten.to[List].flatten)
+          }
         case _ => None
       }
     }
